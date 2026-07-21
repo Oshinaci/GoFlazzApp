@@ -3,6 +3,8 @@
 import { useEffect, useState, createContext, useContext, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
+import { ProfileService, ProfileRecord } from "@/services/profile.service";
+import { ActivityService } from "@/services/activity.service";
 
 export interface Profile {
   id: string;
@@ -35,52 +37,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch or create profile for authenticated user
+  // Fetch or create profile for authenticated user via ProfileService
   const fetchProfile = async (userId: string, userEmail: string, fullName?: string): Promise<Profile | null> => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        return null;
+      const existing = await ProfileService.getProfile(userId);
+      if (existing) {
+        return existing as Profile;
       }
 
-      if (data) {
-        return data as Profile;
-      }
-
-      // If no profile found, create one on-demand (client-side fallback for trigger)
+      // If no profile found, create one on-demand via service
       const defaultDisplayName = fullName || userEmail.split("@")[0] || "User";
-      const { data: newProfile, error: insertError } = await supabase
-        .from("profiles")
-        .insert({
-          user_id: userId,
-          display_name: defaultDisplayName,
-          email: userEmail,
-          onboarding_status: "incomplete",
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error("Error creating on-demand profile:", insertError);
-        return null;
-      }
-
-      // Ensure setting tables are also populated as a fallback
-      await Promise.allSettled([
-        supabase.from("user_preferences").insert({ user_id: userId }).select(),
-        supabase.from("security_settings").insert({ user_id: userId }).select(),
-        supabase.from("notification_settings").insert({ user_id: userId }).select(),
-      ]);
-
-      return newProfile as Profile;
+      const created = await ProfileService.createProfile(userId, userEmail, defaultDisplayName);
+      return created as Profile | null;
     } catch (e) {
-      console.error("Unexpected error in fetchProfile:", e);
+      console.error("[useAuth.fetchProfile]", e);
       return null;
     }
   };
@@ -118,12 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(currentSession);
 
       if (currentSession?.user) {
-        // Log action on SIGN_IN
         if (event === "SIGNED_IN") {
-          await supabase.from("activity_logs").insert({
-            user_id: currentSession.user.id,
-            action: "login",
-            metadata: { user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "server" },
+          await ActivityService.logActivity(currentSession.user.id, "login", {
+            user_agent: typeof window !== "undefined" ? window.navigator.userAgent : "server",
           });
         }
 
@@ -163,7 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error.message };
       }
 
-      // If user session is created immediately (e.g. email verification disabled in supabase config)
       if (data.user) {
         await fetchProfile(data.user.id, email, fullName);
       }
@@ -195,11 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     if (session?.user) {
-      await supabase.from("activity_logs").insert({
-        user_id: session.user.id,
-        action: "logout",
-        metadata: {},
-      });
+      await ActivityService.logActivity(session.user.id, "logout");
     }
     await supabase.auth.signOut();
     setSession(null);
@@ -221,23 +183,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateOnboardingStatus = async (status: string) => {
     if (!session?.user) return { error: "No authenticated user session found" };
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ onboarding_status: status })
-        .eq("user_id", session.user.id);
-
-      if (error) {
-        return { error: error.message };
-      }
+      const result = await ProfileService.updateOnboardingStatus(session.user.id, status);
+      if (result.error) return result;
 
       setProfile((prev) => (prev ? { ...prev, onboarding_status: status } : null));
 
-      // Log onboarding state transition
-      await supabase.from("activity_logs").insert({
-        user_id: session.user.id,
-        action: `onboarding_${status}`,
-        metadata: {},
-      });
+      await ActivityService.logActivity(session.user.id, `onboarding_${status}`);
 
       return { error: null };
     } catch (e: any) {

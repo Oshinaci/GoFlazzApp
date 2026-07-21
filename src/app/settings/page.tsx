@@ -29,10 +29,13 @@ import {
   PlusCircle,
   Download,
   AlertTriangle,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet, SUPPORTED_NETWORKS } from "@/hooks/useWallet";
-import { supabase } from "@/lib/supabaseClient";
+import { PreferencesService } from "@/services/preferences.service";
+import { SecurityService } from "@/services/security.service";
+import { generateMnemonicPDF } from "@/lib/pdfBackup";
 import { toast } from "sonner";
 
 type ViewMode = "menu" | "wallets" | "address-book";
@@ -117,7 +120,7 @@ export default function SettingsPage() {
   // Modals / Action parameters
   const [pinInput, setPinInput] = useState("");
   const [pinAction, setPinAction] = useState<{
-    type: "create" | "import" | "export_key" | "export_phrase";
+    type: "create" | "import" | "export_key" | "export_phrase" | "backup_pdf";
     walletId?: string;
   } | null>(null);
 
@@ -145,24 +148,24 @@ export default function SettingsPage() {
     if (!user) return;
     const loadSettings = async () => {
       try {
-        const [prefRes, secRes, notifRes] = await Promise.all([
-          supabase.from("user_preferences").select("*").eq("user_id", user.id).maybeSingle(),
-          supabase.from("security_settings").select("*").eq("user_id", user.id).maybeSingle(),
-          supabase.from("notification_settings").select("*").eq("user_id", user.id).maybeSingle(),
+        const [prefData, secData, notifData] = await Promise.all([
+          PreferencesService.getUserPreferences(user.id),
+          SecurityService.getSecuritySettings(user.id),
+          PreferencesService.getNotificationSettings(user.id),
         ]);
 
-        if (prefRes.data) {
-          setCurrency(prefRes.data.currency);
-          setLanguage(prefRes.data.language === "en" ? "English" : prefRes.data.language === "id" ? "Indonesian" : "Chinese");
-          setTheme(prefRes.data.theme);
+        if (prefData) {
+          setCurrency(prefData.currency);
+          setLanguage(prefData.language === "en" ? "English" : prefData.language === "id" ? "Indonesian" : "Chinese");
+          setTheme(prefData.theme);
         }
-        if (secRes.data) {
-          setBiometricsEnabled(secRes.data.biometrics_enabled);
-          setPasscodeEnabled(secRes.data.passcode_enabled);
+        if (secData) {
+          setBiometricsEnabled(secData.biometrics_enabled);
+          setPasscodeEnabled(secData.passcode_enabled);
         }
-        if (notifRes.data) {
-          setPushEnabled(notifRes.data.push_enabled);
-          setEmailEnabled(notifRes.data.email_enabled);
+        if (notifData) {
+          setPushEnabled(notifData.push_enabled);
+          setEmailEnabled(notifData.email_enabled);
         }
       } catch (err) {
         console.error("Error loading settings:", err);
@@ -177,7 +180,7 @@ export default function SettingsPage() {
   const updatePreference = async (key: string, value: any) => {
     if (!user) return;
     try {
-      await supabase.from("user_preferences").upsert({ user_id: user.id, [key]: value }, { onConflict: "user_id" });
+      await PreferencesService.updateUserPreference(user.id, key, value);
     } catch (e) {
       console.error(e);
     }
@@ -186,7 +189,7 @@ export default function SettingsPage() {
   const updateSecurity = async (key: string, value: boolean) => {
     if (!user) return;
     try {
-      await supabase.from("security_settings").upsert({ user_id: user.id, [key]: value }, { onConflict: "user_id" });
+      await SecurityService.updateSecuritySetting(user.id, key, value);
     } catch (e) {
       console.error(e);
     }
@@ -195,7 +198,7 @@ export default function SettingsPage() {
   const updateNotification = async (key: string, value: boolean) => {
     if (!user) return;
     try {
-      await supabase.from("notification_settings").upsert({ user_id: user.id, [key]: value }, { onConflict: "user_id" });
+      await PreferencesService.updateNotificationSetting(user.id, key, value);
     } catch (e) {
       console.error(e);
     }
@@ -264,6 +267,18 @@ export default function SettingsPage() {
           setDecryptedKey(null);
           setShowPinModal(false);
           setPinInput("");
+        }
+      }
+    } else if (pinAction.type === "backup_pdf") {
+      if (pinAction.walletId) {
+        const rawPhrase = await exportMnemonic(pinAction.walletId, pinInput);
+        if (rawPhrase) {
+          const targetWallet = wallets.find((w) => w.id === pinAction.walletId);
+          generateMnemonicPDF(targetWallet?.name || "Wallet", targetWallet?.address || "", rawPhrase);
+          toast.success("PDF backup sheet generated and downloaded!");
+          setShowPinModal(false);
+          setPinInput("");
+          setPinAction(null);
         }
       }
     }
@@ -707,7 +722,18 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Export buttons */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => {
+                            setPinAction({ type: "backup_pdf", walletId: w.id });
+                            setShowPinModal(true);
+                          }}
+                          className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition font-medium"
+                          title="Generate physical PDF backup sheet"
+                        >
+                          <FileText className="h-3 w-3" />
+                          Backup PDF
+                        </button>
                         <button
                           onClick={() => {
                             setPinAction({ type: "export_key", walletId: w.id });
@@ -782,16 +808,30 @@ export default function SettingsPage() {
                     </p>
                     <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-neutral-900 font-mono text-[10px] text-white">
                       <span className="break-all select-all">{decryptedPhrase}</span>
-                      <button
-                        onClick={() => handleCopyText(decryptedPhrase, "decrypted_phrase")}
-                        className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition shrink-0 ml-2"
-                      >
-                        {copiedId === "decrypted_phrase" ? (
-                          <Check className="h-3.5 w-3.5 text-success" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        <button
+                          onClick={() => {
+                            const target = wallets.find((w) => w.id === activeWallet?.id) || wallets[0];
+                            generateMnemonicPDF(target?.name || "Wallet", target?.address || "", decryptedPhrase);
+                            toast.success("PDF backup sheet generated and downloaded!");
+                          }}
+                          className="flex items-center gap-1 p-1 px-2 rounded bg-primary/20 border border-primary/30 text-primary hover:bg-primary/30 transition text-[10px] font-sans font-semibold"
+                          title="Download PDF Backup Sheet"
+                        >
+                          <FileText className="h-3 w-3" />
+                          Download PDF
+                        </button>
+                        <button
+                          onClick={() => handleCopyText(decryptedPhrase, "decrypted_phrase")}
+                          className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                        >
+                          {copiedId === "decrypted_phrase" ? (
+                            <Check className="h-3.5 w-3.5 text-success" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1080,6 +1120,7 @@ export default function SettingsPage() {
                 {pinAction.type === "import" && "Enter your 6-digit PIN to encrypt and import the submitted wallet recovery phrase."}
                 {pinAction.type === "export_key" && "Enter your 6-digit PIN to temporarily decrypt and reveal this account's private key."}
                 {pinAction.type === "export_phrase" && "Enter your 6-digit PIN to temporarily decrypt and reveal your master mnemonic phrase."}
+                {pinAction.type === "backup_pdf" && "Enter your 6-digit PIN to decrypt your recovery phrase and generate a client-side PDF backup document."}
               </p>
 
               <div className="space-y-1.5">

@@ -21,16 +21,22 @@ class MockSupabaseClient {
     if (typeof window !== "undefined") {
       // Ensure basic mock tables exist in local storage
       const tables = [
+        "wallet_profiles",
         "profiles", 
+        "wallet_preferences",
         "user_preferences", 
+        "wallet_security",
+        "wallet_settings",
         "security_settings", 
+        "wallet_notifications",
         "notification_settings", 
+        "wallet_activity",
         "activity_logs", 
         "wallets",
         "wallet_metadata",
         "wallet_contacts",
-        "wallet_security",
-        "wallet_preferences"
+        "wallet_balances",
+        "wallet_devices"
       ];
       tables.forEach((table) => {
         if (!localStorage.getItem(`mock_db_${table}`)) {

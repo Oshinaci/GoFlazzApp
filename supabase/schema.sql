@@ -58,9 +58,9 @@ create trigger profiles_updated_at before update on public.profiles
 
 
 -- ========================================================
--- 2. WALLETS
+-- 2. USER WALLETS
 -- ========================================================
-create table if not exists public.wallets (
+create table if not exists public.user_wallets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
@@ -73,13 +73,13 @@ create table if not exists public.wallets (
   updated_at timestamptz not null default now()
 );
 
-alter table public.wallets enable row level security;
-create policy "wallets_select_own" on public.wallets for select using (auth.uid() = user_id);
-create policy "wallets_insert_own" on public.wallets for insert with check (auth.uid() = user_id);
-create policy "wallets_update_own" on public.wallets for update using (auth.uid() = user_id);
-create policy "wallets_delete_own" on public.wallets for delete using (auth.uid() = user_id);
+alter table public.user_wallets enable row level security;
+create policy "user_wallets_select_own" on public.user_wallets for select using (auth.uid() = user_id);
+create policy "user_wallets_insert_own" on public.user_wallets for insert with check (auth.uid() = user_id);
+create policy "user_wallets_update_own" on public.user_wallets for update using (auth.uid() = user_id);
+create policy "user_wallets_delete_own" on public.user_wallets for delete using (auth.uid() = user_id);
 
-create trigger wallets_updated_at before update on public.wallets
+create trigger user_wallets_updated_at before update on public.user_wallets
   for each row execute function public.set_updated_at();
 
 
@@ -177,7 +177,7 @@ create trigger wallet_contacts_updated_at before update on public.wallet_contact
 create table if not exists public.wallet_balances (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  wallet_id uuid references public.wallets(id) on delete cascade,
+  wallet_id uuid references public.user_wallets(id) on delete cascade,
   asset_symbol text not null,
   balance numeric not null default 0,
   token_address text,
@@ -202,7 +202,7 @@ create trigger wallet_balances_updated_at before update on public.wallet_balance
 create table if not exists public.wallet_activity (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  wallet_id uuid references public.wallets(id) on delete set null,
+  wallet_id uuid references public.user_wallets(id) on delete set null,
   action text not null,
   type text,
   amount numeric,
@@ -245,7 +245,7 @@ create trigger activity_logs_updated_at before update on public.activity_logs
 create table if not exists public.wallet_preferences (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  active_wallet_id uuid references public.wallets(id) on delete set null,
+  active_wallet_id uuid references public.user_wallets(id) on delete set null,
   active_network text not null default 'arbitrum',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -349,8 +349,8 @@ create trigger wallet_devices_updated_at before update on public.wallet_devices
 -- ========================================================
 -- 10. INDEXES FOR HIGH-PERFORMANCE QUERYING
 -- ========================================================
-create index if not exists idx_wallets_user_id on public.wallets(user_id);
-create index if not exists idx_wallets_address on public.wallets(address);
+create index if not exists idx_user_wallets_user_id on public.user_wallets(user_id);
+create index if not exists idx_user_wallets_address on public.user_wallets(address);
 create index if not exists idx_wallet_contacts_user_id on public.wallet_contacts(user_id);
 create index if not exists idx_wallet_balances_wallet_id on public.wallet_balances(wallet_id);
 create index if not exists idx_wallet_activity_user_id on public.wallet_activity(user_id);

@@ -32,7 +32,7 @@ class MockSupabaseClient {
         "notification_settings", 
         "wallet_activity",
         "activity_logs", 
-        "wallets",
+        "user_wallets",
         "wallet_metadata",
         "wallet_contacts",
         "wallet_balances",

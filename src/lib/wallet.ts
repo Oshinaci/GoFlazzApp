@@ -4,7 +4,7 @@
  * SECURITY NOTES (read before shipping past internal alpha):
  * - Private keys/mnemonics must NEVER be sent to Supabase or any server in
  *   plaintext. Only the encrypted JSON keystore (output of `encryptWallet`)
- *   is persisted, in `wallets.encrypted_private_key`.
+ *   is persisted, in `user_wallets.encrypted_private_key`.
  * - The encryption password should be derived from the user's PIN/passcode,
  *   never stored anywhere, and never logged.
  * - This alpha implementation is a correct baseline (ethers' scrypt-based

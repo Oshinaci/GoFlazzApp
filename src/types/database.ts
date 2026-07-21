@@ -31,7 +31,7 @@ export interface Database {
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { user_id: string };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
       };
-      wallets: {
+      user_wallets: {
         Row: {
           id: string;
           user_id: string;
@@ -44,13 +44,13 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database["public"]["Tables"]["wallets"]["Row"]> & {
+        Insert: Partial<Database["public"]["Tables"]["user_wallets"]["Row"]> & {
           user_id: string;
           name: string;
           address: string;
           encrypted_private_key: string;
         };
-        Update: Partial<Database["public"]["Tables"]["wallets"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["user_wallets"]["Row"]>;
       };
       wallet_security: {
         Row: {

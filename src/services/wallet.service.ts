@@ -19,7 +19,7 @@ export class WalletService {
    */
   static async getWallets(userId: string): Promise<WalletRecord[]> {
     const { data, error } = await supabase
-      .from("wallets")
+      .from("user_wallets")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
@@ -45,7 +45,7 @@ export class WalletService {
     network: string;
   }): Promise<WalletRecord> {
     const { data, error } = await supabase
-      .from("wallets")
+      .from("user_wallets")
       .insert(walletData)
       .select()
       .single();
@@ -66,7 +66,7 @@ export class WalletService {
    */
   static async renameWallet(walletId: string, userId: string, newName: string): Promise<void> {
     const { error } = await supabase
-      .from("wallets")
+      .from("user_wallets")
       .update({ name: newName })
       .eq("id", walletId)
       .eq("user_id", userId);
@@ -82,7 +82,7 @@ export class WalletService {
    */
   static async removeWallet(walletId: string, userId: string): Promise<void> {
     const { error } = await supabase
-      .from("wallets")
+      .from("user_wallets")
       .delete()
       .eq("id", walletId)
       .eq("user_id", userId);
@@ -101,7 +101,7 @@ export class WalletService {
     encrypted_mnemonic: string | null;
   }> {
     const { data, error } = await supabase
-      .from("wallets")
+      .from("user_wallets")
       .select("encrypted_private_key, encrypted_mnemonic")
       .eq("id", walletId)
       .eq("user_id", userId)

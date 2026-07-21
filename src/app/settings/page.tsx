@@ -38,7 +38,7 @@ import { SecurityService } from "@/services/security.service";
 import { generateMnemonicPDF } from "@/lib/pdfBackup";
 import { toast } from "sonner";
 
-type ViewMode = "menu" | "wallets" | "address-book";
+type ViewMode = "menu" | "wallet-accounts" | "address-book";
 
 interface ToggleSettingProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -502,7 +502,7 @@ export default function SettingsPage() {
 
                   {/* Wallet Management Link */}
                   <div
-                    onClick={() => setView("wallets")}
+                    onClick={() => setView("wallet-accounts")}
                     className="flex items-center justify-between py-3 cursor-pointer hover:bg-white/5 transition px-2 -mx-2 rounded-xl"
                   >
                     <div className="flex items-center gap-3">
@@ -576,7 +576,7 @@ export default function SettingsPage() {
         )}
 
         {/* VIEW 2: WALLET MANAGEMENT */}
-        {view === "wallets" && (
+        {view === "wallet-accounts" && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <button
@@ -622,7 +622,7 @@ export default function SettingsPage() {
                   Your Accounts
                 </h3>
                 <span className="text-[10px] text-muted-foreground font-semibold">
-                  {wallets.length} {wallets.length === 1 ? "wallet" : "wallets"}
+                  {wallets.length} {wallets.length === 1 ? "wallet account" : "wallet accounts"}
                 </span>
               </div>
 

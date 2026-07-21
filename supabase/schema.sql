@@ -415,3 +415,67 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+
+-- ========================================================
+-- 12. FOREIGN KEY REPAIR MIGRATION
+-- Ensures all user_id columns reference auth.users(id) ON DELETE CASCADE
+-- drops legacy profiles(id) references without data loss
+-- ========================================================
+do $$
+declare
+  tbl text;
+  fk_record record;
+begin
+  for tbl in select unnest(array[
+    'user_wallets',
+    'wallets',
+    'wallet_profiles',
+    'profiles',
+    'wallet_security',
+    'wallet_settings',
+    'security_settings',
+    'wallet_contacts',
+    'wallet_balances',
+    'wallet_activity',
+    'activity_logs',
+    'wallet_preferences',
+    'user_preferences',
+    'wallet_notifications',
+    'notification_settings',
+    'wallet_devices'
+  ]) loop
+
+    if exists (
+      select 1 from information_schema.tables 
+      where table_schema = 'public' and table_name = tbl
+    ) then
+
+      for fk_record in (
+        select con.conname
+        from pg_constraint con
+        join pg_class rel on rel.oid = con.conrelid
+        join pg_namespace nsp on nsp.oid = rel.relnamespace
+        join pg_attribute att on att.attrelid = rel.oid and att.attnum = any(con.conkey)
+        where nsp.nspname = 'public'
+          and rel.relname = tbl
+          and att.attname = 'user_id'
+          and con.contype = 'f'
+      ) loop
+        execute format('alter table public.%I drop constraint if exists %I;', tbl, fk_record.conname);
+      end loop;
+
+      execute format('
+        alter table public.%I 
+        add constraint %I 
+        foreign key (user_id) 
+        references auth.users(id) 
+        on delete cascade;
+      ', tbl, tbl || '_user_id_fkey');
+
+    end if;
+
+  end loop;
+end;
+$$;
+

@@ -13,45 +13,23 @@ end;
 $$ language plpgsql;
 
 -- ========================================================
--- 1. PROFILES & WALLET PROFILES
+-- 1. PROFILES
 -- ========================================================
-create table if not exists public.wallet_profiles (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  display_name text,
-  email text,
-  avatar_url text,
-  onboarding_status text not null default 'incomplete',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (user_id)
-);
-
-alter table public.wallet_profiles enable row level security;
-create policy "wallet_profiles_select_own" on public.wallet_profiles for select using (auth.uid() = user_id);
-create policy "wallet_profiles_insert_own" on public.wallet_profiles for insert with check (auth.uid() = user_id);
-create policy "wallet_profiles_update_own" on public.wallet_profiles for update using (auth.uid() = user_id);
-
-create trigger wallet_profiles_updated_at before update on public.wallet_profiles
-  for each row execute function public.set_updated_at();
-
--- Alias table for profiles for legacy or direct query support
 create table if not exists public.profiles (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  id uuid primary key references auth.users(id) on delete cascade,
   display_name text,
+  username text,
   email text,
   avatar_url text,
-  onboarding_status text not null default 'incomplete',
+  onboarding_completed boolean not null default false,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (user_id)
+  updated_at timestamptz not null default now()
 );
 
 alter table public.profiles enable row level security;
-create policy "profiles_select_own" on public.profiles for select using (auth.uid() = user_id);
-create policy "profiles_insert_own" on public.profiles for insert with check (auth.uid() = user_id);
-create policy "profiles_update_own" on public.profiles for update using (auth.uid() = user_id);
+create policy "profiles_select_own" on public.profiles for select using (auth.uid() = id);
+create policy "profiles_insert_own" on public.profiles for insert with check (auth.uid() = id);
+create policy "profiles_update_own" on public.profiles for update using (auth.uid() = id);
 
 create trigger profiles_updated_at before update on public.profiles
   for each row execute function public.set_updated_at();
@@ -364,21 +342,13 @@ create or replace function public.handle_new_user()
 returns trigger as $$
 begin
   -- Profiles
-  insert into public.profiles (user_id, display_name, email, onboarding_status)
+  insert into public.profiles (id, display_name, email, onboarding_completed)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', substring(new.email from '^[^@]+')),
     new.email,
-    'incomplete'
-  ) on conflict (user_id) do nothing;
-
-  insert into public.wallet_profiles (user_id, display_name, email, onboarding_status)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'full_name', substring(new.email from '^[^@]+')),
-    new.email,
-    'incomplete'
-  ) on conflict (user_id) do nothing;
+    false
+  ) on conflict (id) do nothing;
 
   -- Preferences
   insert into public.user_preferences (user_id, currency, language, theme)

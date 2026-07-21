@@ -21,7 +21,6 @@ class MockSupabaseClient {
     if (typeof window !== "undefined") {
       // Ensure basic mock tables exist in local storage
       const tables = [
-        "wallet_profiles",
         "profiles", 
         "wallet_preferences",
         "user_preferences", 
@@ -121,11 +120,10 @@ class MockSupabaseClient {
       const db_profiles = JSON.parse(localStorage.getItem("mock_db_profiles") || "[]");
       const displayName = options?.data?.full_name || email.split("@")[0] || "User";
       db_profiles.push({
-        id: "prof_" + Math.random().toString(36).substr(2, 9),
-        user_id: newUser.id,
+        id: newUser.id,
         display_name: displayName,
         email: email,
-        onboarding_status: "incomplete",
+        onboarding_completed: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });

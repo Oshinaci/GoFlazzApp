@@ -8,13 +8,13 @@ import { ActivityService } from "@/services/activity.service";
 
 export interface Profile {
   id: string;
-  user_id: string;
   display_name: string | null;
+  username?: string | null;
   email: string | null;
   avatar_url: string | null;
-  onboarding_status: string; // 'incomplete', 'completed'
-  created_at: string;
-  updated_at: string;
+  onboarding_completed: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthContextValue {
@@ -26,7 +26,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
-  updateOnboardingStatus: (status: string) => Promise<{ error: string | null }>;
+  updateOnboardingStatus: (status: string | boolean) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -180,15 +180,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateOnboardingStatus = async (status: string) => {
+  const updateOnboardingStatus = async (status: string | boolean) => {
     if (!session?.user) return { error: "No authenticated user session found" };
     try {
       const result = await ProfileService.updateOnboardingStatus(session.user.id, status);
       if (result.error) return result;
 
-      setProfile((prev) => (prev ? { ...prev, onboarding_status: status } : null));
+      const isCompleted = typeof status === "boolean" ? status : status === "completed";
+      setProfile((prev) => (prev ? { ...prev, onboarding_completed: isCompleted } : null));
 
-      await ActivityService.logActivity(session.user.id, `onboarding_${status}`);
+      await ActivityService.logActivity(session.user.id, `onboarding_${isCompleted ? "completed" : "incomplete"}`);
 
       return { error: null };
     } catch (e: any) {

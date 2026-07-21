@@ -40,9 +40,9 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       }
     } else {
       // User IS logged in
-      const onboardingStatus = profile?.onboarding_status || "incomplete";
+      const isCompleted = profile?.onboarding_completed ?? false;
 
-      if (onboardingStatus === "completed") {
+      if (isCompleted) {
         // Onboarding complete: cannot access public or onboarding screens
         if (isPublic || isOnboarding) {
           router.replace("/");
@@ -60,12 +60,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   // Prevent flash of unauthenticated content during loading or redirection
   const isPublic = PUBLIC_ROUTES.includes(pathname);
   const isOnboarding = ONBOARDING_ROUTES.includes(pathname);
-  const onboardingStatus = profile?.onboarding_status || "incomplete";
+  const isCompleted = profile?.onboarding_completed ?? false;
 
   const shouldShowContent = () => {
     if (!mounted || loading) return false;
     if (!session) return isPublic;
-    if (onboardingStatus === "completed") return !isPublic && !isOnboarding;
+    if (isCompleted) return !isPublic && !isOnboarding;
     return isOnboarding || isPublic;
   };
 

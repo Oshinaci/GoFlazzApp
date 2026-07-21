@@ -3,32 +3,18 @@
 export interface Database {
   public: {
     Tables: {
-      wallet_profiles: {
-        Row: {
-          id: string;
-          user_id: string;
-          display_name: string | null;
-          email: string | null;
-          avatar_url: string | null;
-          onboarding_status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Partial<Database["public"]["Tables"]["wallet_profiles"]["Row"]> & { user_id: string };
-        Update: Partial<Database["public"]["Tables"]["wallet_profiles"]["Row"]>;
-      };
       profiles: {
         Row: {
           id: string;
-          user_id: string;
           display_name: string | null;
+          username: string | null;
           email: string | null;
           avatar_url: string | null;
-          onboarding_status: string;
+          onboarding_completed: boolean;
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { user_id: string };
+        Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { id: string };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
       };
       user_wallets: {

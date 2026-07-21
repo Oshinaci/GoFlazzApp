@@ -196,7 +196,7 @@ export default function OnboardingPage() {
       }
 
       // 4. Set profile status to completed
-      const { error: profileErr } = await updateOnboardingStatus("completed");
+      const { error: profileErr } = await updateOnboardingStatus(true);
       if (profileErr) {
         toast.error("Failed to complete profile onboarding: " + profileErr);
         setIsFinishing(false);

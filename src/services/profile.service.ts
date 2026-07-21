@@ -2,24 +2,24 @@ import { supabase } from "@/lib/supabaseClient";
 
 export interface ProfileRecord {
   id: string;
-  user_id: string;
   display_name: string | null;
+  username?: string | null;
   email: string | null;
   avatar_url: string | null;
-  onboarding_status: string;
+  onboarding_completed: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
 export class ProfileService {
   /**
-   * Fetch profile by user_id
+   * Fetch profile by id (auth.users.id)
    */
   static async getProfile(userId: string): Promise<ProfileRecord | null> {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .maybeSingle();
 
     if (error) {
@@ -37,10 +37,10 @@ export class ProfileService {
     const { data: newProfile, error: insertError } = await supabase
       .from("profiles")
       .insert({
-        user_id: userId,
+        id: userId,
         display_name: displayName,
         email: email,
-        onboarding_status: "incomplete",
+        onboarding_completed: false,
       })
       .select()
       .single();
@@ -50,32 +50,23 @@ export class ProfileService {
       return null;
     }
 
-    // Also populate wallet_profiles
-    await supabase.from("wallet_profiles").insert({
-      user_id: userId,
-      display_name: displayName,
-      email: email,
-      onboarding_status: "incomplete",
-    });
-
     return newProfile as ProfileRecord;
   }
 
   /**
-   * Update onboarding status
+   * Update onboarding_completed status
    */
-  static async updateOnboardingStatus(userId: string, status: string): Promise<{ error: string | null }> {
+  static async updateOnboardingStatus(userId: string, status: string | boolean): Promise<{ error: string | null }> {
+    const isCompleted = typeof status === "boolean" ? status : status === "completed";
     const { error } = await supabase
       .from("profiles")
-      .update({ onboarding_status: status })
-      .eq("user_id", userId);
+      .update({ onboarding_completed: isCompleted })
+      .eq("id", userId);
 
     if (error) {
       console.error("[ProfileService.updateOnboardingStatus]", error);
       return { error: error.message };
     }
-
-    await supabase.from("wallet_profiles").update({ onboarding_status: status }).eq("user_id", userId);
 
     return { error: null };
   }

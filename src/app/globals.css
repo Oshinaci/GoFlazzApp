@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-white;
+    background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.15), transparent);
+  }
+  ::selection {
+    @apply bg-primary/30;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/60 ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply border border-border bg-surface-glass shadow-glass backdrop-blur-xl;
+  }
+  .glass-card {
+    @apply glass rounded-2xl;
+  }
+  .text-gradient {
+    @apply bg-blue-gradient bg-clip-text text-transparent;
+  }
+  .logo-text {
+    @apply font-logo font-black tracking-tight text-gradient;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

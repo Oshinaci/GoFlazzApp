@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { SecurityService, WalletSecurityRecord } from "@/services/security.service";
+import { BiometricService, BiometricType } from "@/services/biometric.service";
 import { WalletService } from "@/services/wallet.service";
 import { toast } from "sonner";
 
@@ -21,9 +22,14 @@ interface WalletSecurityContextValue {
   securityState: WalletSecurityRecord | null;
   isBiometricsEnabled: boolean;
   isBiometricsSupported: boolean;
+  isBiometricAvailable: boolean;
+  biometricType: BiometricType;
+  biometricTypeLabel: string;
   canUnlockWithBiometrics: boolean;
   unlockWallet: (pin: string) => Promise<{ success: boolean; error?: string }>;
   unlockWithBiometrics: () => Promise<{ success: boolean; error?: string }>;
+  enableBiometricsWithPrompt: () => Promise<{ success: boolean; error?: string }>;
+  disableBiometricsWithPin: (pin: string) => Promise<{ success: boolean; error?: string }>;
   lockWallet: () => void;
   setupPIN: (pin: string) => Promise<boolean>;
   verifyPIN: (pin: string) => Promise<boolean>;
@@ -182,13 +188,13 @@ export function WalletSecurityProvider({ children }: { children: React.ReactNode
   };
 
   /**
-   * Prepared Architecture Hook for Biometric Unlock
+   * Production-Ready Biometric Unlock Implementation
    */
   const unlockWithBiometrics = async (): Promise<{ success: boolean; error?: string }> => {
     if (!user) return { success: false, error: "No authenticated user." };
 
     if (!securityState?.biometrics_enabled) {
-      return { success: false, error: "Biometrics is not enabled in settings." };
+      return { success: false, error: "Biometric unlock is not enabled in settings." };
     }
 
     // Check brute force lock
@@ -197,19 +203,70 @@ export function WalletSecurityProvider({ children }: { children: React.ReactNode
     }
 
     try {
-      // Prepared extension point for WebAuthn credential assertion
-      if (typeof window !== "undefined" && window.PublicKeyCredential) {
-        // Biometric assertion check extension point
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem(`goflazz_unlocked_${user.id}`, "true");
-        }
-        setIsUnlocked(true);
-        return { success: true };
-      } else {
-        return { success: false, error: "Biometric hardware is not available on this device." };
+      const authResult = await BiometricService.authenticate("Unlock GoFlazz Wallet");
+
+      if (!authResult.success) {
+        return {
+          success: false,
+          error: authResult.error || "Biometric authentication failed.",
+        };
       }
+
+      // Reset PIN attempts on successful biometric unlock
+      await SecurityService.resetPinAttempts(user.id);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`goflazz_unlocked_${user.id}`, "true");
+      }
+
+      setIsUnlocked(true);
+      await refreshSecurityState();
+      return { success: true };
     } catch (err: any) {
+      console.error("[unlockWithBiometrics]", err);
       return { success: false, error: err.message || "Biometric unlock failed." };
+    }
+  };
+
+  /**
+   * Prompt user to enable biometrics with WebAuthn authentication
+   */
+  const enableBiometricsWithPrompt = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: "No authenticated user." };
+
+    try {
+      const res = await BiometricService.enableBiometric(user.id);
+      if (res.success) {
+        await refreshSecurityState();
+        toast.success("Biometric authentication enabled!");
+      }
+      return res;
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to enable biometrics." };
+    }
+  };
+
+  /**
+   * Disable biometrics with PIN verification requirement
+   */
+  const disableBiometricsWithPin = async (pin: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: "No authenticated user." };
+
+    try {
+      // Verify PIN first
+      const isValid = await SecurityService.verifyPin(user.id, pin);
+      if (!isValid) {
+        return { success: false, error: "Incorrect PIN. Cannot disable biometrics." };
+      }
+
+      const res = await BiometricService.disableBiometric(user.id);
+      if (res.success) {
+        await refreshSecurityState();
+        toast.success("Biometric authentication disabled.");
+      }
+      return res;
+    } catch (err: any) {
+      return { success: false, error: err.message || "Failed to disable biometrics." };
     }
   };
 
@@ -299,9 +356,12 @@ export function WalletSecurityProvider({ children }: { children: React.ReactNode
     }
   };
 
-  const isBiometricsSupported = securityState?.biometrics_supported ?? false;
+  const isBiometricsSupported = BiometricService.isSupported();
   const isBiometricsEnabled = securityState?.biometrics_enabled ?? false;
-  const canUnlockWithBiometrics = isBiometricsSupported && isBiometricsEnabled;
+  const biometricType = BiometricService.detectBiometricType();
+  const biometricTypeLabel = BiometricService.getBiometricTypeLabel(biometricType);
+  const isBiometricAvailable = isBiometricsSupported && biometricType !== "none";
+  const canUnlockWithBiometrics = isBiometricsSupported && isBiometricsEnabled && !isLockedByBruteForce;
 
   return (
     <WalletSecurityContext.Provider
@@ -314,9 +374,14 @@ export function WalletSecurityProvider({ children }: { children: React.ReactNode
         securityState,
         isBiometricsEnabled,
         isBiometricsSupported,
+        isBiometricAvailable,
+        biometricType,
+        biometricTypeLabel,
         canUnlockWithBiometrics,
         unlockWallet,
         unlockWithBiometrics,
+        enableBiometricsWithPrompt,
+        disableBiometricsWithPin,
         lockWallet,
         setupPIN,
         verifyPIN,

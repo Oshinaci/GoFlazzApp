@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet, SUPPORTED_NETWORKS } from "@/hooks/useWallet";
+import { useWalletSecurityContext } from "@/context/WalletSecurityContext";
 import { PreferencesService } from "@/services/preferences.service";
 import { SecurityService } from "@/services/security.service";
 import { generateMnemonicPDF } from "@/lib/pdfBackup";
@@ -103,15 +104,21 @@ export default function SettingsPage() {
     deleteContact,
   } = useWallet();
 
+  const {
+    isBiometricsEnabled,
+    biometricTypeLabel,
+    enableBiometricsWithPrompt,
+    disableBiometricsWithPin,
+  } = useWalletSecurityContext();
+
   const [view, setView] = useState<ViewMode>("menu");
 
   // App settings local state
   const [currency, setCurrency] = useState("USD");
   const [language, setLanguage] = useState("English");
-  const { theme, setTheme: setAppTheme } = useTheme();; // const { theme, setTheme: setAppTheme } = useTheme();
+  const { theme, setTheme: setAppTheme } = useTheme();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
-  const [biometricsEnabled, setBiometricsEnabled] = useState(true);
   const [passcodeEnabled, setPasscodeEnabled] = useState(true);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -123,7 +130,7 @@ export default function SettingsPage() {
   // Modals / Action parameters
   const [pinInput, setPinInput] = useState("");
   const [pinAction, setPinAction] = useState<{
-    type: "create" | "import" | "export_key" | "export_phrase" | "backup_pdf";
+    type: "create" | "import" | "export_key" | "export_phrase" | "backup_pdf" | "disable_biometrics";
     walletId?: string;
   } | null>(null);
 
@@ -163,7 +170,6 @@ export default function SettingsPage() {
           if (prefData.theme) setAppTheme(prefData.theme);
         }
         if (secData) {
-          setBiometricsEnabled(secData.biometrics_enabled);
           setPasscodeEnabled(secData.passcode_enabled);
         }
         if (notifData) {
@@ -283,6 +289,15 @@ export default function SettingsPage() {
           setPinInput("");
           setPinAction(null);
         }
+      }
+    } else if (pinAction.type === "disable_biometrics") {
+      const res = await disableBiometricsWithPin(pinInput);
+      if (res.success) {
+        setShowPinModal(false);
+        setPinInput("");
+        setPinAction(null);
+      } else {
+        toast.error(res.error || "Incorrect PIN. Cannot disable biometrics.");
       }
     }
   };
@@ -480,14 +495,17 @@ export default function SettingsPage() {
                 <div className="glass-card divide-y divide-border px-4">
                   <ToggleSetting
                     icon={Shield}
-                    label="Biometric ID"
-                    description="Use FaceID or Fingerprint"
-                    checked={biometricsEnabled}
+                    label={`${biometricTypeLabel} Authentication`}
+                    description={`Use ${biometricTypeLabel} for fast & secure unlock`}
+                    checked={isBiometricsEnabled}
                     disabled={isLoading}
-                    onChange={(checked) => {
-                      setBiometricsEnabled(checked);
-                      updateSecurity("biometrics_enabled", checked);
-                      toast.success(checked ? "Biometric ID enabled" : "Biometric ID disabled");
+                    onChange={async (checked) => {
+                      if (checked) {
+                        await enableBiometricsWithPrompt();
+                      } else {
+                        setPinAction({ type: "disable_biometrics" });
+                        setShowPinModal(true);
+                      }
                     }}
                   />
                   <ToggleSetting

@@ -27,6 +27,7 @@ export default function UnlockWalletPage() {
     isLockedByBruteForce,
     remainingLockSeconds,
     canUnlockWithBiometrics,
+    biometricTypeLabel,
     failedAttempts,
   } = useWalletSecurityContext();
 
@@ -37,6 +38,7 @@ export default function UnlockWalletPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isShaking, setIsShaking] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasAutoPromptedBiometric, setHasAutoPromptedBiometric] = useState<boolean>(false);
 
   // Fetch primary wallet for display
   useEffect(() => {
@@ -63,6 +65,40 @@ export default function UnlockWalletPage() {
       router.replace("/");
     }
   }, [isUnlocked, router]);
+
+  // Biometric Unlock Trigger
+  const handleBiometrics = useCallback(async () => {
+    if (isLockedByBruteForce || isLoading) return;
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await unlockWithBiometrics();
+      if (res.success) {
+        toast.success("Unlocked with " + biometricTypeLabel + ".");
+        router.replace("/");
+      } else {
+        if (res.error && !res.error.includes("cancelled")) {
+          toast.error(res.error);
+          setErrorMessage(res.error);
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Biometric unlock failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLockedByBruteForce, isLoading, unlockWithBiometrics, biometricTypeLabel, router]);
+
+  // Auto-trigger biometrics once when landing on unlock page if biometrics enabled
+  useEffect(() => {
+    if (canUnlockWithBiometrics && !hasAutoPromptedBiometric && !isUnlocked && !isLockedByBruteForce) {
+      setHasAutoPromptedBiometric(true);
+      const timer = setTimeout(() => {
+        handleBiometrics();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [canUnlockWithBiometrics, hasAutoPromptedBiometric, isUnlocked, isLockedByBruteForce, handleBiometrics]);
 
   // Submit unlock PIN
   const handleUnlock = useCallback(
@@ -157,25 +193,6 @@ export default function UnlockWalletPage() {
       return `${mins}m ${secs < 10 ? "0" : ""}${secs}s`;
     }
     return `${secs}s`;
-  };
-
-  // Biometric Unlock Trigger
-  const handleBiometrics = async () => {
-    if (isLockedByBruteForce || isLoading) return;
-    setIsLoading(true);
-    try {
-      const res = await unlockWithBiometrics();
-      if (res.success) {
-        toast.success("Unlocked with Biometrics.");
-        router.replace("/");
-      } else {
-        toast.error(res.error || "Biometric unlock failed.");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Biometric unlock failed.");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const shortenedAddress = wallet?.address
@@ -347,8 +364,19 @@ export default function UnlockWalletPage() {
           </button>
         </div>
 
-        {/* Explicit Unlock CTA Button */}
-        <div className="mt-6 w-full max-w-[280px]">
+        {/* Explicit Unlock CTA Button & Biometric Option */}
+        <div className="mt-6 flex flex-col gap-2.5 w-full max-w-[280px]">
+          {canUnlockWithBiometrics && (
+            <button
+              onClick={handleBiometrics}
+              disabled={isLoading || isLockedByBruteForce}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/20 disabled:opacity-40"
+            >
+              <Fingerprint className="h-4 w-4" />
+              <span>Unlock with {biometricTypeLabel}</span>
+            </button>
+          )}
+
           <button
             onClick={() => handleUnlock(pin)}
             disabled={pin.length !== 6 || isLoading || isLockedByBruteForce}

@@ -23,7 +23,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
-import { generateMnemonic as cryptoGenerateMnemonic, isValidMnemonic } from "@/lib/wallet";
+import { generateMnemonic as cryptoGenerateMnemonic, isValidMnemonic, walletFromMnemonic } from "@/lib/wallet";
+import { encryptData, decryptData } from "@/lib/encryption";
+import { WalletService } from "@/services/wallet.service";
 import { toast } from "sonner";
 import Logo from "@/components/layout/Logo";
 
@@ -40,7 +42,7 @@ type OnboardingSubStep =
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, updateOnboardingStatus } = useAuth();
-  const { createWallet, importWallet, setupPIN, setBiometricsEnabled } = useWallet();
+  const { primaryWallet, createWallet, importWallet, setupPIN, setBiometricsEnabled } = useWallet();
 
   // Wizard state
   const [subStep, setSubStep] = useState<OnboardingSubStep>("choice");
@@ -69,10 +71,25 @@ export default function OnboardingPage() {
   // Finalizing loading
   const [isFinishing, setIsFinishing] = useState(false);
 
-  // Generate mnemonic when entering warning/display state
-  const handleStartCreation = () => {
+  // Generate or retrieve mnemonic when entering warning/display state
+  const handleStartCreation = async () => {
     try {
-      const phrase = cryptoGenerateMnemonic();
+      let phrase = "";
+      if (user && primaryWallet?.id) {
+        try {
+          const keys = await WalletService.getEncryptedKeys(primaryWallet.id, user.id);
+          if (keys.encrypted_mnemonic) {
+            phrase = await decryptData(keys.encrypted_mnemonic, `goflazz_sec_${user.id}`);
+          }
+        } catch {
+          // If already encrypted with a custom PIN or secret, fallback
+        }
+      }
+
+      if (!phrase || !isValidMnemonic(phrase)) {
+        phrase = cryptoGenerateMnemonic();
+      }
+
       setMnemonicPhrase(phrase);
       // Pick 3 random words to verify
       const indices = [1, 5, 10]; // Word 2, 6, 11
@@ -81,7 +98,7 @@ export default function OnboardingPage() {
       setIsCreatingMode(true);
       setSubStep("create_warning");
     } catch (err: any) {
-      toast.error("Error generating mnemonic: " + err.message);
+      toast.error("Error retrieving recovery phrase: " + err.message);
     }
   };
 
@@ -180,12 +197,19 @@ export default function OnboardingPage() {
         await setBiometricsEnabled(true);
       }
 
-      // 3. Create or Import Wallet (which encrypts using the PIN we just established!)
+      // 3. Create or re-encrypt Primary Wallet with user PIN
       if (isCreatingMode) {
-        const walletResult = await createWallet("Primary Wallet", pin);
-        if (!walletResult) {
-          setIsFinishing(false);
-          return;
+        if (primaryWallet?.id) {
+          const ethWallet = walletFromMnemonic(mnemonicPhrase, 0);
+          const encryptedMnemonic = await encryptData(mnemonicPhrase, pin);
+          const encryptedPrivateKey = await encryptData(ethWallet.privateKey, pin);
+          await WalletService.updateWalletKeys(primaryWallet.id, user.id, encryptedMnemonic, encryptedPrivateKey);
+        } else {
+          const walletResult = await createWallet("Primary Wallet", pin);
+          if (!walletResult) {
+            setIsFinishing(false);
+            return;
+          }
         }
       } else {
         const importResult = await importWallet("Imported Wallet 1", mnemonicPhrase, pin);

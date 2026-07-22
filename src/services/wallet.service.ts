@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
+import { generateMnemonic, walletFromMnemonic } from "@/lib/wallet";
+import { encryptData } from "@/lib/encryption";
 
 export interface WalletRecord {
   id: string;
@@ -119,5 +121,80 @@ export class WalletService {
     }
 
     return data;
+  }
+
+  /**
+   * Ensure that a user has at least one self-custodial wallet.
+   * Automatically creates an EVM-compatible primary wallet if none exists.
+   * Idempotent and safe against concurrent requests or retries.
+   */
+  static async ensureDefaultWallet(userId: string, encryptionSecret?: string): Promise<WalletRecord | null> {
+    try {
+      const existingWallets = await WalletService.getWallets(userId);
+      if (existingWallets.length > 0) {
+        return existingWallets.find((w) => w.is_primary) || existingWallets[0];
+      }
+
+      // Generate a new secure EVM wallet (Ethereum-compatible)
+      const mnemonicPhrase = generateMnemonic();
+      const ethWallet = walletFromMnemonic(mnemonicPhrase, 0);
+      const privateKey = ethWallet.privateKey;
+      const address = ethWallet.address;
+
+      const secret = encryptionSecret || `goflazz_sec_${userId}`;
+      const encryptedMnemonic = await encryptData(mnemonicPhrase, secret);
+      const encryptedPrivateKey = await encryptData(privateKey, secret);
+
+      const newWallet = await WalletService.createWallet({
+        user_id: userId,
+        name: "Primary Wallet",
+        address: address,
+        encrypted_mnemonic: encryptedMnemonic,
+        encrypted_private_key: encryptedPrivateKey,
+        is_primary: true,
+        network: "arbitrum",
+        chain_type: "evm",
+        wallet_type: "hd_mnemonic",
+        derivation_path: "m/44'/60'/0'/0/0",
+      });
+
+      return newWallet;
+    } catch (err: any) {
+      console.error("[WalletService.ensureDefaultWallet]", err);
+      try {
+        const recheck = await WalletService.getWallets(userId);
+        if (recheck.length > 0) {
+          return recheck.find((w) => w.is_primary) || recheck[0];
+        }
+      } catch {
+        // ignore
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Update encrypted keys for an existing wallet (e.g., when setting or updating security PIN)
+   */
+  static async updateWalletKeys(
+    walletId: string,
+    userId: string,
+    encryptedMnemonic: string,
+    encryptedPrivateKey: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from("user_wallets")
+      .update({
+        encrypted_mnemonic: encryptedMnemonic,
+        encrypted_private_key: encryptedPrivateKey,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", walletId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("[WalletService.updateWalletKeys]", error);
+      throw error;
+    }
   }
 }

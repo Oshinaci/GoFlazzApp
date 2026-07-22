@@ -61,7 +61,14 @@ export function useWallet() {
     try {
       setLoading(true);
       // 1. Fetch Wallets via Service Layer
-      const rawWallets = await WalletService.getWallets(user.id);
+      let rawWallets = await WalletService.getWallets(user.id);
+      if (rawWallets.length === 0) {
+        const defaultWallet = await WalletService.ensureDefaultWallet(user.id);
+        if (defaultWallet) {
+          rawWallets = [defaultWallet];
+        }
+      }
+
       const formattedWallets: WalletAccount[] = rawWallets.map((w) => ({
         id: w.id,
         name: w.name,

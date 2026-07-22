@@ -5,6 +5,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { ProfileService, ProfileRecord } from "@/services/profile.service";
 import { ActivityService } from "@/services/activity.service";
+import { WalletService } from "@/services/wallet.service";
 
 export interface Profile {
   id: string;
@@ -40,6 +41,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch or create profile for authenticated user via ProfileService
   const fetchProfile = async (userId: string, userEmail: string, fullName?: string): Promise<Profile | null> => {
     try {
+      // Ensure the user has an auto-created primary EVM wallet asynchronously
+      WalletService.ensureDefaultWallet(userId).catch((err) => {
+        console.error("[useAuth.fetchProfile.ensureDefaultWallet]", err);
+      });
+
       const existing = await ProfileService.getProfile(userId);
       if (existing) {
         return existing as Profile;

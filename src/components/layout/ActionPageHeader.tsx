@@ -7,7 +7,7 @@ export default function ActionPageHeader({ title }: { title: string }) {
       <Link
         href="/"
         aria-label="Back to home"
-        className="rounded-full p-2 text-muted-foreground hover:bg-white/5 hover:text-white"
+        className="rounded-full p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
       >
         <ArrowLeft className="h-5 w-5" />
       </Link>

@@ -81,7 +81,7 @@ export default function AuthCallbackPage() {
           </div>
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold tracking-tight text-white">Verifying Identity</h2>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Verifying Identity</h2>
           <p className="text-xs text-muted-foreground animate-pulse max-w-xs">
             Connecting to secure enclave, validating email certificates, and establishing session keys...
           </p>

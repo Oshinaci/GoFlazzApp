@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { ArrowRight, Chrome, ShieldAlert, KeyRound } from "lucide-react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import Logo from "@/components/layout/Logo";
 
 export default function WelcomePage() {
   return (
-    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-12 text-white">
+    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-12 text-foreground">
       {/* Background ambient light */}
       <div className="pointer-events-none absolute inset-x-0 -top-40 -z-10 flex justify-center overflow-hidden">
         <div className="h-[400px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
@@ -29,7 +29,7 @@ export default function WelcomePage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="relative flex h-32 w-32 items-center justify-center rounded-[2rem] border border-white/10 bg-surface-glass shadow-glow"
+          className="relative flex h-32 w-32 items-center justify-center rounded-[2rem] border border-foreground/10 bg-surface-glass shadow-glow"
         >
           {/* Decorative floating orbits */}
           <div className="absolute -top-1 -right-1 h-3 w-3 animate-ping rounded-full bg-success" />
@@ -73,7 +73,7 @@ export default function WelcomePage() {
         {/* Login */}
         <Link
           href="/login"
-          className="flex w-full items-center justify-center rounded-2xl border border-border bg-surface-glass py-4 text-sm font-semibold text-white transition hover:bg-white/5 active:scale-[0.98]"
+          className="flex w-full items-center justify-center rounded-2xl border border-border bg-surface-glass py-4 text-sm font-semibold text-foreground transition hover:bg-foreground/5 active:scale-[0.98]"
         >
           Log In
         </Link>
@@ -98,11 +98,11 @@ export default function WelcomePage() {
         {/* Bottom Terms & Privacy Policy */}
         <div className="pt-6 text-center text-xs text-muted-foreground">
           By continuing, you agree to our{" "}
-          <Link href="#" className="underline hover:text-white transition">
+          <Link href="#" className="underline hover:text-foreground transition">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="#" className="underline hover:text-white transition">
+          <Link href="#" className="underline hover:text-foreground transition">
             Privacy Policy
           </Link>
           .

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import BottomNav from "@/components/layout/BottomNav";
 import { AuthProvider } from "@/hooks/useAuth";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import { WalletSecurityProvider } from "@/context/WalletSecurityContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -17,19 +19,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen overflow-x-hidden bg-background pb-20 antialiased">
-        <AuthProvider>
-          <ProtectedRoute>
-            {children}
-            <BottomNav />
-          </ProtectedRoute>
-          <Toaster theme="dark" position="top-center" richColors />
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <WalletSecurityProvider>
+              <ProtectedRoute>
+                {children}
+                <BottomNav />
+              </ProtectedRoute>
+            </WalletSecurityProvider>
+            <Toaster theme="dark" position="top-center" richColors />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
-
-

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useWalletSecurityContext } from "@/context/WalletSecurityContext";
 import Logo from "./Logo";
 
 const PUBLIC_ROUTES = [
@@ -15,9 +16,11 @@ const PUBLIC_ROUTES = [
 ];
 
 const ONBOARDING_ROUTES = ["/onboarding"];
+const UNLOCK_ROUTES = ["/unlock"];
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, profile, loading } = useAuth();
+  const { isUnlocked } = useWalletSecurityContext();
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -31,6 +34,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
     const isPublic = PUBLIC_ROUTES.includes(pathname);
     const isOnboarding = ONBOARDING_ROUTES.includes(pathname);
+    const isUnlockPage = UNLOCK_ROUTES.includes(pathname);
 
     if (!session) {
       // User is NOT logged in
@@ -43,8 +47,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
       const isCompleted = profile?.onboarding_completed ?? false;
 
       if (isCompleted) {
-        // Onboarding complete: cannot access public or onboarding screens
+        // Onboarding complete
         if (isPublic || isOnboarding) {
+          router.replace(isUnlocked ? "/" : "/unlock");
+        } else if (!isUnlocked && !isUnlockPage) {
+          // Authenticated & onboarding complete, but wallet is locked -> Redirect to Unlock
+          router.replace("/unlock");
+        } else if (isUnlocked && isUnlockPage) {
+          // Wallet is unlocked, redirect away from unlock screen
           router.replace("/");
         }
       } else {
@@ -55,17 +65,22 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         }
       }
     }
-  }, [session, profile, loading, pathname, router, mounted]);
+  }, [session, profile, loading, isUnlocked, pathname, router, mounted]);
 
   // Prevent flash of unauthenticated content during loading or redirection
   const isPublic = PUBLIC_ROUTES.includes(pathname);
   const isOnboarding = ONBOARDING_ROUTES.includes(pathname);
+  const isUnlockPage = UNLOCK_ROUTES.includes(pathname);
   const isCompleted = profile?.onboarding_completed ?? false;
 
   const shouldShowContent = () => {
     if (!mounted || loading) return false;
     if (!session) return isPublic;
-    if (isCompleted) return !isPublic && !isOnboarding;
+    if (isCompleted) {
+      if (isPublic || isOnboarding) return false;
+      if (!isUnlocked) return isUnlockPage;
+      return !isUnlockPage;
+    }
     return isOnboarding || isPublic;
   };
 
@@ -83,7 +98,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
             </div>
           </div>
           <div className="text-center">
-            <h2 className="text-lg font-semibold tracking-tight text-white">GoFlazz</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">GoFlazz</h2>
             <p className="text-xs text-muted-foreground mt-1">Securing connection...</p>
           </div>
         </div>
@@ -93,3 +108,4 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   return <>{children}</>;
 }
+

@@ -41,7 +41,7 @@ export default function ReceivePage() {
 
           <button
             onClick={handleCopy}
-            className="mx-auto flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm transition hover:bg-white/5"
+            className="mx-auto flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm transition hover:bg-foreground/5"
           >
             {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
             {copied ? "Copied" : "Copy address"}

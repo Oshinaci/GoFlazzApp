@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, KeyRound, Mail, User, ShieldCheck, Check, X, Eye, EyeOff } from "lucide-react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Logo from "@/components/layout/Logo";
@@ -64,7 +64,7 @@ export default function RegisterPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-white text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-foreground text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -79,7 +79,7 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight">Verify your email</h2>
             <p className="text-sm text-muted-foreground">
-              We&apos;ve sent a secure verification link to <span className="font-semibold text-white">{email}</span>.
+              We&apos;ve sent a secure verification link to <span className="font-semibold text-foreground">{email}</span>.
             </p>
           </div>
 
@@ -89,7 +89,7 @@ export default function RegisterPage() {
 
           <Link
             href="/login"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-800 py-3.5 text-sm font-semibold text-white transition hover:bg-neutral-700"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-800 py-3.5 text-sm font-semibold text-foreground transition hover:bg-neutral-700"
           >
             Go to Login
           </Link>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-8 text-white">
+    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-8 text-foreground">
       {/* Background ambient light */}
       <div className="pointer-events-none absolute inset-x-0 -top-40 -z-10 flex justify-center overflow-hidden">
         <div className="h-[400px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
@@ -109,7 +109,7 @@ export default function RegisterPage() {
       <header className="flex items-center justify-between py-2 max-w-md mx-auto w-full">
         <Link
           href="/welcome"
-          className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition"
+          className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Back
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-white placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
+                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
               />
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-white placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
+                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
               />
             </div>
           </div>
@@ -170,12 +170,12 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-12 text-sm text-white placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
+                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-12 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-3.5 text-muted-foreground hover:text-white"
+                className="absolute right-4 top-3.5 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -234,7 +234,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-white placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
+                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
               />
             </div>
             {confirmPassword.length > 0 && password !== confirmPassword && (
@@ -249,7 +249,7 @@ export default function RegisterPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-gradient py-4 text-sm font-semibold shadow-glow transition hover:opacity-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
           >
             {isLoading ? (
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-foreground/20 border-t-white" />
             ) : (
               "Sign Up"
             )}

@@ -11,10 +11,11 @@ export default {
     },
     extend: {
       colors: {
-        background: "#05070D",
-        surface: "#0B0F1A",
-        "surface-glass": "rgba(255,255,255,0.04)",
-        border: "rgba(255,255,255,0.08)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        surface: "var(--surface)",
+        "surface-glass": "var(--surface-glass)",
+        border: "var(--border)",
         primary: {
           DEFAULT: "#3B82F6",
           foreground: "#FFFFFF",
@@ -29,8 +30,8 @@ export default {
           glow: "#22D3EE",
         },
         muted: {
-          DEFAULT: "#151A26",
-          foreground: "#8B93A7",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
         success: "#22C55E",
         danger: "#EF4444",
@@ -47,7 +48,7 @@ export default {
         "3xl": "2rem",
       },
       boxShadow: {
-        glass: "0 8px 32px rgba(0,0,0,0.35)",
+        glass: "var(--glass-shadow)",
         glow: "0 0 40px rgba(59,130,246,0.25)",
       },
       backgroundImage: {

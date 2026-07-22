@@ -22,7 +22,7 @@ export default function QuickActions() {
         <Link
           key={action.id}
           href={action.href}
-          className="glass-card flex flex-col items-center gap-2 py-4 transition hover:bg-white/5"
+          className="glass-card flex flex-col items-center gap-2 py-4 transition hover:bg-foreground/5"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-gradient">
             <action.icon className="h-5 w-5" />

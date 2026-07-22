@@ -20,7 +20,7 @@ import {
   Key,
   ChevronLeft,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { generateMnemonic as cryptoGenerateMnemonic, isValidMnemonic, walletFromMnemonic } from "@/lib/wallet";
@@ -239,7 +239,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-8 text-white">
+    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-8 text-foreground">
       {/* Background ambient light */}
       <div className="pointer-events-none absolute inset-x-0 -top-40 -z-10 flex justify-center overflow-hidden">
         <div className="h-[400px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
       <header className="flex items-center justify-between py-2 max-w-md mx-auto w-full">
         <Logo size="sm" />
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-surface-glass border border-border/40 px-2.5 py-1 rounded-full">
-          <span className="font-semibold text-white">Security Wizard</span>
+          <span className="font-semibold text-foreground">Security Wizard</span>
         </div>
       </header>
 
@@ -324,7 +324,7 @@ export default function OnboardingPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSubStep("choice")}
-                  className="p-1 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                  className="p-1 rounded-lg hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -343,7 +343,7 @@ export default function OnboardingPage() {
                   <AlertTriangle className="h-5 w-5" />
                 </div>
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-sm text-white">What is a Secret Recovery Phrase?</h3>
+                  <h3 className="font-semibold text-sm text-foreground">What is a Secret Recovery Phrase?</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     It is the master key to your funds. Anyone who has this phrase can steal all your digital assets. GoFlazz does not store this phrase on any server.
                   </p>
@@ -403,7 +403,7 @@ export default function OnboardingPage() {
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-border/40 bg-surface-glass text-left"
                   >
                     <span className="text-[10px] text-muted-foreground w-3">{index + 1}</span>
-                    <span className="text-white font-medium text-xs truncate">{word}</span>
+                    <span className="text-foreground font-medium text-xs truncate">{word}</span>
                   </div>
                 ))}
               </div>
@@ -411,7 +411,7 @@ export default function OnboardingPage() {
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={handleCopyPhrase}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface hover:bg-surface-glass/40 text-xs font-semibold text-muted-foreground hover:text-white transition"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border bg-surface hover:bg-surface-glass/40 text-xs font-semibold text-muted-foreground hover:text-foreground transition"
                 >
                   {copiedPhrase ? (
                     <>
@@ -456,7 +456,7 @@ export default function OnboardingPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSubStep("create_display")}
-                  className="p-1 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                  className="p-1 rounded-lg hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -481,7 +481,7 @@ export default function OnboardingPage() {
                       value={verifyInputs[idx] || ""}
                       onChange={(e) => setVerifyInputs({ ...verifyInputs, [idx]: e.target.value })}
                       placeholder={`Enter word #${idx + 1}`}
-                      className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder-muted-foreground focus:border-primary focus:outline-none"
+                      className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
                 ))}
@@ -509,7 +509,7 @@ export default function OnboardingPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSubStep("choice")}
-                  className="p-1 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                  className="p-1 rounded-lg hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -533,7 +533,7 @@ export default function OnboardingPage() {
                     value={importPhraseInput}
                     onChange={(e) => setImportPhraseInput(e.target.value)}
                     placeholder="word1 word2 word3 ... word12"
-                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder-muted-foreground focus:border-primary focus:outline-none font-mono resize-none leading-relaxed"
+                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none font-mono resize-none leading-relaxed"
                   />
                 </div>
 
@@ -584,12 +584,12 @@ export default function OnboardingPage() {
                       value={pin}
                       onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                       placeholder="••••••"
-                      className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder-muted-foreground tracking-widest focus:border-primary focus:outline-none"
+                      className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder-muted-foreground tracking-widest focus:border-primary focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -607,12 +607,12 @@ export default function OnboardingPage() {
                     value={confirmPin}
                     onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
                     placeholder="••••••"
-                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-white placeholder-muted-foreground tracking-widest focus:border-primary focus:outline-none"
+                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder-muted-foreground tracking-widest focus:border-primary focus:outline-none"
                   />
                 </div>
 
                 <div className="rounded-xl border border-border bg-surface-glass/40 p-3 text-[11px] text-muted-foreground leading-normal pl-4 list-disc space-y-1">
-                  <p className="font-semibold text-white mb-1">PIN Rules:</p>
+                  <p className="font-semibold text-foreground mb-1">PIN Rules:</p>
                   <li>Must be exactly 6 numerical digits.</li>
                   <li>Sequential (123456) or identical (000000) PINs are prevented for your safety.</li>
                 </div>
@@ -667,7 +667,7 @@ export default function OnboardingPage() {
                     }`}
                   >
                     <span
-                      className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${
+                      className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-foreground transition-transform ${
                         biometricsChecked ? "translate-x-5" : "translate-x-0"
                       }`}
                     />
@@ -682,7 +682,7 @@ export default function OnboardingPage() {
               >
                 {isFinishing ? (
                   <>
-                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white mr-2" />
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-foreground/20 border-t-white mr-2" />
                     Encrypting Wallet...
                   </>
                 ) : (
@@ -722,7 +722,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-muted-foreground">Network:</span>
-                  <span className="font-mono text-white">Arbitrum One</span>
+                  <span className="font-mono text-foreground">Arbitrum One</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
                   <span className="text-muted-foreground">Encryption:</span>

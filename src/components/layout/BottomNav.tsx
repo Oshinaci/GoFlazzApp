@@ -27,6 +27,7 @@ export default function BottomNav() {
     "/forgot-password",
     "/reset-password",
     "/onboarding",
+    "/unlock",
     "/auth/callback",
   ];
 
@@ -46,7 +47,7 @@ export default function BottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center gap-1 rounded-xl px-4 py-1.5 text-xs transition",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-white"
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className="h-5 w-5" />

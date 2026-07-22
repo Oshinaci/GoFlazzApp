@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import {
   User,
   Wallet,
   Sun,
+  Moon,
+  Monitor,
   Languages,
   Coins,
   Lock,
@@ -71,7 +74,7 @@ function ToggleSetting({ icon: Icon, label, description, checked, disabled, onCh
         aria-checked={checked}
       >
         <span
-          className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition-transform ${
+          className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-foreground transition-transform ${
             checked ? "translate-x-5" : "translate-x-0"
           }`}
         />
@@ -105,7 +108,7 @@ export default function SettingsPage() {
   // App settings local state
   const [currency, setCurrency] = useState("USD");
   const [language, setLanguage] = useState("English");
-  const [theme, setTheme] = useState("dark");
+  const { theme, setTheme: setAppTheme } = useTheme();; // const { theme, setTheme: setAppTheme } = useTheme();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
@@ -157,7 +160,7 @@ export default function SettingsPage() {
         if (prefData) {
           setCurrency(prefData.currency);
           setLanguage(prefData.language === "en" ? "English" : prefData.language === "id" ? "Indonesian" : "Chinese");
-          setTheme(prefData.theme);
+          if (prefData.theme) setAppTheme(prefData.theme);
         }
         if (secData) {
           setBiometricsEnabled(secData.biometrics_enabled);
@@ -174,7 +177,7 @@ export default function SettingsPage() {
       }
     };
     loadSettings();
-  }, [user]);
+  }, [user, setAppTheme]);
 
   // DB Updaters
   const updatePreference = async (key: string, value: any) => {
@@ -322,7 +325,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 text-white relative">
+    <main className="min-h-screen bg-background px-4 py-8 text-foreground relative">
       <div className="container max-w-md pb-24">
         {/* VIEW 1: MAIN MENU */}
         {view === "menu" && (
@@ -330,7 +333,7 @@ export default function SettingsPage() {
             <div className="mb-6 flex items-center gap-3">
               <button
                 onClick={() => window.location.href = "/"}
-                className="rounded-full p-2 text-muted-foreground hover:bg-white/5 hover:text-white transition"
+                className="rounded-full p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -341,7 +344,7 @@ export default function SettingsPage() {
               {/* Profile card */}
               <section className="glass-card p-4 flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-gradient">
-                  <User className="h-6 w-6 text-white" />
+                  <User className="h-6 w-6 text-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{profile?.display_name || "GoFlazz User"}</p>
@@ -423,7 +426,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
                       <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
-                        <Sun className="h-4 w-4" />
+                        {theme === "light" ? <Sun className="h-4 w-4" /> : theme === "system" ? <Monitor className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                       </div>
                       <div>
                         <p className="text-sm font-medium">Appearance</p>
@@ -436,7 +439,7 @@ export default function SettingsPage() {
                         disabled={isLoading}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setTheme(val);
+                          setAppTheme(val);
                           updatePreference("theme", val);
                           toast.success(`Appearance changed to ${val} theme`);
                         }}
@@ -453,7 +456,7 @@ export default function SettingsPage() {
                   {/* Address Book */}
                   <div
                     onClick={() => setView("address-book")}
-                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-white/5 transition px-2 -mx-2 rounded-xl"
+                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-foreground/5 transition px-2 -mx-2 rounded-xl"
                   >
                     <div className="flex items-center gap-3">
                       <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
@@ -503,7 +506,7 @@ export default function SettingsPage() {
                   {/* Wallet Management Link */}
                   <div
                     onClick={() => setView("wallet-accounts")}
-                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-white/5 transition px-2 -mx-2 rounded-xl"
+                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-foreground/5 transition px-2 -mx-2 rounded-xl"
                   >
                     <div className="flex items-center gap-3">
                       <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
@@ -585,7 +588,7 @@ export default function SettingsPage() {
                   setDecryptedKey(null);
                   setDecryptedPhrase(null);
                 }}
-                className="rounded-full p-2 text-muted-foreground hover:bg-white/5 hover:text-white transition"
+                className="rounded-full p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -605,7 +608,7 @@ export default function SettingsPage() {
                     className={`flex items-center gap-1.5 p-2.5 rounded-xl border text-xs transition ${
                       activeNetwork === net.id
                         ? "border-primary bg-primary/10 text-white"
-                        : "border-border bg-surface text-muted-foreground hover:text-white"
+                        : "border-border bg-surface text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <span>{net.icon}</span>
@@ -646,7 +649,7 @@ export default function SettingsPage() {
                                 type="text"
                                 value={renameWalletInput}
                                 onChange={(e) => setRenameWalletInput(e.target.value)}
-                                className="bg-surface border border-border rounded-lg px-2 py-1 text-xs text-white max-w-[150px] outline-none"
+                                className="bg-surface border border-border rounded-lg px-2 py-1 text-xs text-foreground max-w-[150px] outline-none"
                               />
                               <button
                                 onClick={async () => {
@@ -669,7 +672,7 @@ export default function SettingsPage() {
                                   setRenameWalletId(w.id);
                                   setRenameWalletInput(w.name);
                                 }}
-                                className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                                className="p-1 rounded hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition"
                                 title="Rename Wallet"
                               >
                                 <Edit2 className="h-3 w-3" />
@@ -686,7 +689,7 @@ export default function SettingsPage() {
                                 e.stopPropagation();
                                 handleCopyText(w.address, w.id);
                               }}
-                              className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                              className="p-1 rounded hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition"
                             >
                               {copiedId === w.id ? (
                                 <Check className="h-3 w-3 text-success" />
@@ -739,7 +742,7 @@ export default function SettingsPage() {
                             setPinAction({ type: "export_key", walletId: w.id });
                             setShowPinModal(true);
                           }}
-                          className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded bg-surface border border-border text-muted-foreground hover:text-white transition"
+                          className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded bg-surface border border-border text-muted-foreground hover:text-foreground transition"
                         >
                           <Key className="h-3 w-3" />
                           Export Private Key
@@ -749,7 +752,7 @@ export default function SettingsPage() {
                             setPinAction({ type: "export_phrase", walletId: w.id });
                             setShowPinModal(true);
                           }}
-                          className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded bg-surface border border-border text-muted-foreground hover:text-white transition"
+                          className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded bg-surface border border-border text-muted-foreground hover:text-foreground transition"
                         >
                           <Download className="h-3 w-3" />
                           Export Recovery Mnemonic
@@ -774,7 +777,7 @@ export default function SettingsPage() {
                       setDecryptedKey(null);
                       setDecryptedPhrase(null);
                     }}
-                    className="text-xs text-muted-foreground hover:text-white"
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     Close
                   </button>
@@ -785,11 +788,11 @@ export default function SettingsPage() {
                     <p className="text-[11px] text-muted-foreground leading-snug">
                       Your raw private key for selected account. <strong>NEVER</strong> share this with anyone!
                     </p>
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-neutral-900 font-mono text-[10px] text-white">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-neutral-900 font-mono text-[10px] text-foreground">
                       <span className="break-all select-all">{decryptedKey}</span>
                       <button
                         onClick={() => handleCopyText(decryptedKey, "decrypted_key")}
-                        className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition shrink-0 ml-2"
+                        className="p-1 rounded hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition shrink-0 ml-2"
                       >
                         {copiedId === "decrypted_key" ? (
                           <Check className="h-3.5 w-3.5 text-success" />
@@ -806,7 +809,7 @@ export default function SettingsPage() {
                     <p className="text-[11px] text-muted-foreground leading-snug">
                       Your 12-word master Secret Recovery Phrase. It derives all derived accounts.
                     </p>
-                    <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-neutral-900 font-mono text-[10px] text-white">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-neutral-900 font-mono text-[10px] text-foreground">
                       <span className="break-all select-all">{decryptedPhrase}</span>
                       <div className="flex items-center gap-1.5 shrink-0 ml-2">
                         <button
@@ -823,7 +826,7 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={() => handleCopyText(decryptedPhrase, "decrypted_phrase")}
-                          className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition"
+                          className="p-1 rounded hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition"
                         >
                           {copiedId === "decrypted_phrase" ? (
                             <Check className="h-3.5 w-3.5 text-success" />
@@ -858,7 +861,7 @@ export default function SettingsPage() {
                       placeholder="e.g. Trading Wallet"
                       value={newWalletName}
                       onChange={(e) => setNewWalletName(e.target.value)}
-                      className="flex-1 bg-surface border border-border rounded-xl px-3 py-2 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary"
+                      className="flex-1 bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-primary"
                     />
                     <button
                       onClick={() => {
@@ -886,7 +889,7 @@ export default function SettingsPage() {
                     placeholder="word1 word2 ... word12"
                     value={importPhrase}
                     onChange={(e) => setImportPhrase(e.target.value)}
-                    className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary font-mono resize-none"
+                    className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-primary font-mono resize-none"
                   />
                   <button
                     onClick={() => {
@@ -921,7 +924,7 @@ export default function SettingsPage() {
                   setContactLabel("Personal");
                   setEditingContactId(null);
                 }}
-                className="rounded-full p-2 text-muted-foreground hover:bg-white/5 hover:text-white transition"
+                className="rounded-full p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -958,7 +961,7 @@ export default function SettingsPage() {
                       setShowAddContact(false);
                       setEditingContactId(null);
                     }}
-                    className="text-xs text-muted-foreground hover:text-white"
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     Cancel
                   </button>
@@ -973,7 +976,7 @@ export default function SettingsPage() {
                       placeholder="e.g. Alice Crypto"
                       value={contactName}
                       onChange={(e) => setContactName(e.target.value)}
-                      className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary"
+                      className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-primary"
                     />
                   </div>
 
@@ -985,7 +988,7 @@ export default function SettingsPage() {
                       placeholder="0x..."
                       value={contactAddress}
                       onChange={(e) => setContactAddress(e.target.value)}
-                      className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-muted-foreground outline-none focus:border-primary"
+                      className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs font-mono text-foreground placeholder-muted-foreground outline-none focus:border-primary"
                     />
                   </div>
 
@@ -1025,7 +1028,7 @@ export default function SettingsPage() {
                 placeholder="Search contacts by name or address..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-surface border border-border rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-muted-foreground outline-none focus:border-primary"
+                className="w-full bg-surface border border-border rounded-2xl pl-10 pr-4 py-3 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-primary"
               />
             </div>
 
@@ -1056,7 +1059,7 @@ export default function SettingsPage() {
                         </span>
                         <button
                           onClick={() => handleCopyText(c.address, c.id)}
-                          className="p-1 rounded hover:bg-white/5 text-muted-foreground hover:text-white transition shrink-0"
+                          className="p-1 rounded hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition shrink-0"
                         >
                           {copiedId === c.id ? (
                             <Check className="h-3 w-3 text-success" />
@@ -1070,7 +1073,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-1 text-muted-foreground shrink-0">
                       <button
                         onClick={() => handleEditContact(c)}
-                        className="p-2 rounded-lg border border-border bg-surface hover:text-white hover:bg-white/5 transition"
+                        className="p-2 rounded-lg border border-border bg-surface hover:text-foreground hover:bg-foreground/5 transition"
                         title="Edit Contact"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
@@ -1109,7 +1112,7 @@ export default function SettingsPage() {
                     setPinInput("");
                     setPinAction(null);
                   }}
-                  className="text-xs text-muted-foreground hover:text-white"
+                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Cancel
                 </button>
@@ -1131,7 +1134,7 @@ export default function SettingsPage() {
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ""))}
                   placeholder="••••••"
-                  className="w-full text-center rounded-xl border border-border bg-surface px-4 py-3 text-lg font-bold tracking-widest text-white focus:border-primary focus:outline-none"
+                  className="w-full text-center rounded-xl border border-border bg-surface px-4 py-3 text-lg font-bold tracking-widest text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
 

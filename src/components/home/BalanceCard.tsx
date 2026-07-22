@@ -41,7 +41,7 @@ export default function BalanceCard() {
         <button
           aria-label={isVisible ? "Hide balance" : "Show balance"}
           onClick={() => setIsVisible((prev: boolean) => !prev)}
-          className="rounded-full p-1.5 text-muted-foreground hover:bg-white/5 hover:text-white"
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
         >
           {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </button>
@@ -54,15 +54,15 @@ export default function BalanceCard() {
             <span className="text-[9px] bg-primary/20 text-primary border border-primary/25 rounded px-1.5 py-0.5 uppercase tracking-wider font-bold">
               {activeNetwork === "arbitrum" ? "Arbitrum One" : activeNetwork || "Arbitrum One"}
             </span>
-            <span className="truncate text-white font-semibold max-w-[90px]">
+            <span className="truncate text-foreground font-semibold max-w-[90px]">
               {activeWallet.name}
             </span>
           </div>
-          <div className="flex items-center gap-1 font-mono text-muted-foreground hover:text-white transition">
+          <div className="flex items-center gap-1 font-mono text-muted-foreground hover:text-foreground transition">
             <span>
               {activeWallet.address.substring(0, 6)}...{activeWallet.address.substring(activeWallet.address.length - 4)}
             </span>
-            <button onClick={handleCopy} className="p-1 rounded hover:bg-white/5 transition">
+            <button onClick={handleCopy} className="p-1 rounded hover:bg-foreground/5 transition">
               {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
             </button>
           </div>

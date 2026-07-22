@@ -24,7 +24,7 @@ export default function ActivityRow({ item }: { item: ActivityItem }) {
         <span
           className={cn(
             "flex h-9 w-9 items-center justify-center rounded-full",
-            isPositive ? "bg-success/10 text-success" : "bg-white/5 text-muted-foreground"
+            isPositive ? "bg-success/10 text-success" : "bg-foreground/5 text-muted-foreground"
           )}
         >
           <Icon className="h-4 w-4" />

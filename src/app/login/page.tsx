@@ -58,7 +58,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-8 text-white">
+    <div className="relative flex min-h-screen flex-col justify-between bg-background px-6 py-8 text-foreground">
       {/* Background ambient light */}
       <div className="pointer-events-none absolute inset-x-0 -top-40 -z-10 flex justify-center overflow-hidden">
         <div className="h-[400px] w-[600px] rounded-full bg-primary/10 blur-[100px]" />
@@ -68,7 +68,7 @@ export default function LoginPage() {
       <header className="flex items-center justify-between py-2 max-w-md mx-auto w-full">
         <Link
           href="/welcome"
-          className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition"
+          className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           Back
@@ -108,7 +108,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-white placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
+                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
               />
             </div>
           </div>
@@ -132,12 +132,12 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-12 text-sm text-white placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
+                className="w-full rounded-xl border border-border bg-surface-glass py-3.5 pl-11 pr-12 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:border-primary focus:bg-surface/50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-3.5 text-muted-foreground hover:text-white"
+                className="absolute right-4 top-3.5 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -164,7 +164,7 @@ export default function LoginPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-gradient py-4 text-sm font-semibold shadow-glow transition hover:opacity-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
           >
             {isLoading ? (
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-foreground/20 border-t-white" />
             ) : (
               "Log In"
             )}

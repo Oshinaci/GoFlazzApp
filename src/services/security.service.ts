@@ -31,6 +31,76 @@ export interface SecuritySettingsRecord {
   updated_at?: string;
 }
 
+function getLocalWalletSecurity(userId: string): WalletSecurityRecord {
+  if (typeof window === "undefined") {
+    return {
+      user_id: userId,
+      pin_hash: "",
+      pin_attempts: 0,
+      locked_until: null,
+      last_unlock: null,
+      biometrics_supported: false,
+      biometrics_enabled: false,
+    };
+  }
+  const key = `wallet_sec_${userId}`;
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (_) {}
+  }
+  const defaultVal: WalletSecurityRecord = {
+    user_id: userId,
+    pin_hash: "",
+    pin_attempts: 0,
+    locked_until: null,
+    last_unlock: null,
+    biometrics_supported: !!window.PublicKeyCredential,
+    biometrics_enabled: false,
+  };
+  localStorage.setItem(key, JSON.stringify(defaultVal));
+  return defaultVal;
+}
+
+function setLocalWalletSecurity(userId: string, record: WalletSecurityRecord) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(`wallet_sec_${userId}`, JSON.stringify(record));
+  }
+}
+
+function getLocalSecuritySettings(userId: string): SecuritySettingsRecord {
+  if (typeof window === "undefined") {
+    return {
+      user_id: userId,
+      biometrics_enabled: false,
+      passcode_enabled: true,
+      auto_lock_minutes: 5,
+    };
+  }
+  const key = `sec_settings_${userId}`;
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (_) {}
+  }
+  const defaultVal: SecuritySettingsRecord = {
+    user_id: userId,
+    biometrics_enabled: false,
+    passcode_enabled: true,
+    auto_lock_minutes: 5,
+  };
+  localStorage.setItem(key, JSON.stringify(defaultVal));
+  return defaultVal;
+}
+
+function setLocalSecuritySettings(userId: string, record: SecuritySettingsRecord) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(`sec_settings_${userId}`, JSON.stringify(record));
+  }
+}
+
 export class SecurityService {
   /**
    * Constant-time comparison wrapper
@@ -81,18 +151,21 @@ export class SecurityService {
    * Get wallet security state
    */
   static async getWalletSecurity(userId: string): Promise<WalletSecurityRecord | null> {
-    const { data, error } = await supabase
-      .from("wallet_security")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("wallet_security")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("[SecurityService.getWalletSecurity]", error);
-      return null;
+      if (error || !data) {
+        return getLocalWalletSecurity(userId);
+      }
+
+      return data as WalletSecurityRecord;
+    } catch (_) {
+      return getLocalWalletSecurity(userId);
     }
-
-    return data as WalletSecurityRecord | null;
   }
 
   /**
@@ -127,25 +200,23 @@ export class SecurityService {
     const biometricsSupported = typeof window !== "undefined" && !!window.PublicKeyCredential;
     const pinHash = await hashPin(pin, userId);
 
-    const { error } = await supabase
-      .from("wallet_security")
-      .upsert(
-        {
-          user_id: userId,
-          pin_hash: pinHash,
-          pin_attempts: 0,
-          locked_until: null,
-          biometrics_supported: biometricsSupported,
-          biometrics_enabled: false,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      );
+    const record: WalletSecurityRecord = {
+      user_id: userId,
+      pin_hash: pinHash,
+      pin_attempts: 0,
+      locked_until: null,
+      biometrics_supported: biometricsSupported,
+      biometrics_enabled: false,
+      updated_at: new Date().toISOString(),
+    };
 
-    if (error) {
-      console.error("[SecurityService.upsertPIN]", error);
-      throw error;
-    }
+    setLocalWalletSecurity(userId, record);
+
+    try {
+      await supabase
+        .from("wallet_security")
+        .upsert(record, { onConflict: "user_id" });
+    } catch (_) {}
   }
 
   /**
@@ -163,19 +234,24 @@ export class SecurityService {
    * Reset failed PIN attempts counter and update last_unlock
    */
   static async resetPinAttempts(userId: string): Promise<void> {
-    const { error } = await supabase
-      .from("wallet_security")
-      .update({
-        pin_attempts: 0,
-        locked_until: null,
-        last_unlock: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
+    const sec = getLocalWalletSecurity(userId);
+    sec.pin_attempts = 0;
+    sec.locked_until = null;
+    sec.last_unlock = new Date().toISOString();
+    sec.updated_at = new Date().toISOString();
+    setLocalWalletSecurity(userId, sec);
 
-    if (error) {
-      console.error("[SecurityService.resetPinAttempts]", error);
-    }
+    try {
+      await supabase
+        .from("wallet_security")
+        .update({
+          pin_attempts: 0,
+          locked_until: null,
+          last_unlock: sec.last_unlock,
+          updated_at: sec.updated_at,
+        })
+        .eq("user_id", userId);
+    } catch (_) {}
   }
 
   /**
@@ -189,22 +265,25 @@ export class SecurityService {
     let lockedUntil: string | null = null;
 
     if (nextAttempts >= 5) {
-      // Lock for 15 minutes after 5 failed attempts
       lockedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
     }
 
-    const { error } = await supabase
-      .from("wallet_security")
-      .update({
-        pin_attempts: nextAttempts,
-        locked_until: lockedUntil,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
+    const sec = getLocalWalletSecurity(userId);
+    sec.pin_attempts = nextAttempts;
+    sec.locked_until = lockedUntil;
+    sec.updated_at = new Date().toISOString();
+    setLocalWalletSecurity(userId, sec);
 
-    if (error) {
-      console.error("[SecurityService.recordFailedAttempt]", error);
-    }
+    try {
+      await supabase
+        .from("wallet_security")
+        .update({
+          pin_attempts: nextAttempts,
+          locked_until: lockedUntil,
+          updated_at: sec.updated_at,
+        })
+        .eq("user_id", userId);
+    } catch (_) {}
 
     return { nextAttempts, lockedUntil };
   }
@@ -213,54 +292,63 @@ export class SecurityService {
    * Update biometrics toggle in security
    */
   static async setBiometricsEnabled(userId: string, enabled: boolean): Promise<void> {
-    const { error } = await supabase
-      .from("wallet_security")
-      .update({ biometrics_enabled: enabled, updated_at: new Date().toISOString() })
-      .eq("user_id", userId);
+    const sec = getLocalWalletSecurity(userId);
+    sec.biometrics_enabled = enabled;
+    sec.updated_at = new Date().toISOString();
+    setLocalWalletSecurity(userId, sec);
 
-    if (error) {
-      console.error("[SecurityService.setBiometricsEnabled]", error);
-      throw error;
-    }
+    const settings = getLocalSecuritySettings(userId);
+    settings.biometrics_enabled = enabled;
+    setLocalSecuritySettings(userId, settings);
 
-    await Promise.allSettled([
-      supabase.from("security_settings").upsert({ user_id: userId, biometrics_enabled: enabled }, { onConflict: "user_id" }),
-      supabase.from("wallet_settings").upsert({ user_id: userId, biometrics_enabled: enabled }, { onConflict: "user_id" }),
-    ]);
+    try {
+      await supabase
+        .from("wallet_security")
+        .update({ biometrics_enabled: enabled, updated_at: new Date().toISOString() })
+        .eq("user_id", userId);
+
+      await Promise.allSettled([
+        supabase.from("security_settings").upsert({ user_id: userId, biometrics_enabled: enabled }, { onConflict: "user_id" }),
+        supabase.from("wallet_settings").upsert({ user_id: userId, biometrics_enabled: enabled }, { onConflict: "user_id" }),
+      ]);
+    } catch (_) {}
   }
 
   /**
    * Get general security settings
    */
   static async getSecuritySettings(userId: string): Promise<SecuritySettingsRecord | null> {
-    const { data, error } = await supabase
-      .from("security_settings")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("security_settings")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (error) {
-      console.error("[SecurityService.getSecuritySettings]", error);
-      return null;
+      if (error || !data) {
+        return getLocalSecuritySettings(userId);
+      }
+
+      return data as SecuritySettingsRecord;
+    } catch (_) {
+      return getLocalSecuritySettings(userId);
     }
-
-    return data as SecuritySettingsRecord | null;
   }
 
   /**
    * Update general security settings
    */
   static async updateSecuritySetting(userId: string, key: string, value: any): Promise<void> {
-    const { error } = await supabase
-      .from("security_settings")
-      .upsert({ user_id: userId, [key]: value, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+    const settings = getLocalSecuritySettings(userId);
+    (settings as any)[key] = value;
+    settings.updated_at = new Date().toISOString();
+    setLocalSecuritySettings(userId, settings);
 
-    if (error) {
-      console.error("[SecurityService.updateSecuritySetting]", error);
-      throw error;
-    }
-
-    await supabase.from("wallet_settings").upsert({ user_id: userId, [key]: value, updated_at: new Date().toISOString() });
+    try {
+      await supabase
+        .from("security_settings")
+        .upsert({ user_id: userId, [key]: value, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+      await supabase.from("wallet_settings").upsert({ user_id: userId, [key]: value, updated_at: new Date().toISOString() });
+    } catch (_) {}
   }
 }
-

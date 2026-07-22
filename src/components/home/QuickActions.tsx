@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Send, Download, Wallet } from "lucide-react";
-import type { QuickActionId } from "@/types";
+import { Send, Download, Wallet, ArrowDownUp, RefreshCcw, Image as ImageIcon, Contact2, Search, Zap, BarChart2 } from "lucide-react";
 
 interface QuickAction {
-  id: QuickActionId;
+  id: string;
   label: string;
   href: string;
   icon: typeof Send;
@@ -12,22 +11,27 @@ interface QuickAction {
 const QUICK_ACTIONS: QuickAction[] = [
   { id: "send", label: "Send", href: "/send", icon: Send },
   { id: "receive", label: "Receive", href: "/receive", icon: Download },
-  { id: "pay", label: "Pay", href: "/pay", icon: Wallet },
+  { id: "swap", label: "Swap", href: "/swap", icon: ArrowDownUp },
+  { id: "bridge", label: "Bridge", href: "/bridge", icon: RefreshCcw },
+  { id: "nfts", label: "NFTs", icon: ImageIcon, href: "/nfts" },
+  { id: "address-book", label: "Contacts", href: "/address-book", icon: Contact2 },
+  { id: "explorer", label: "Explorer", href: "/explorer", icon: Search },
+  { id: "gas", label: "Gas Tracker", href: "/gas", icon: Zap },
 ];
 
 export default function QuickActions() {
   return (
-    <section className="grid grid-cols-3 gap-3">
+    <section className="grid grid-cols-4 gap-2.5">
       {QUICK_ACTIONS.map((action) => (
         <Link
           key={action.id}
           href={action.href}
-          className="glass-card flex flex-col items-center gap-2 py-4 transition hover:bg-foreground/5"
+          className="glass-card flex flex-col items-center justify-center gap-1.5 py-3 transition hover:bg-foreground/5 hover:border-primary/50 text-center"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-gradient">
-            <action.icon className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <action.icon className="h-4 w-4" />
           </span>
-          <span className="text-sm">{action.label}</span>
+          <span className="text-[11px] font-semibold text-foreground truncate w-full px-1">{action.label}</span>
         </Link>
       ))}
     </section>

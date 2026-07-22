@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Eye, EyeOff, Copy, Check, TrendingUp } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
 import { SIMULATED_TOTAL_BALANCE_USD, mockBalanceHistory } from "@/data/mock";
 import { formatCurrency } from "@/lib/utils";
@@ -27,11 +28,15 @@ export default function BalanceCard() {
 
   return (
     <div className="glass-card p-6 text-center">
-      <div className="flex items-center justify-center gap-2">
-        <p className="text-sm text-muted-foreground">Total Balance</p>
-        <span className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+      <div className="flex items-center justify-between">
+        <span className="rounded-full border border-warning/30 bg-warning/10 px-2.5 py-0.5 text-[10px] font-medium text-warning">
           Simulated
         </span>
+        <p className="text-xs text-muted-foreground font-medium">Total Net Balance</p>
+        <Link href="/analytics" className="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
+          <TrendingUp className="h-3.5 w-3.5" />
+          <span>Analytics</span>
+        </Link>
       </div>
 
       <div className="mt-2 flex items-center justify-center gap-2">
@@ -46,7 +51,7 @@ export default function BalanceCard() {
           {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </button>
       </div>
-      <p className="mt-1 text-sm text-success">+4.2% this week</p>
+      <p className="mt-1 text-sm text-success">+4.96% this week</p>
 
       {activeWallet && (
         <div className="mt-4 flex items-center justify-between rounded-xl border border-border/60 bg-surface/40 px-3 py-2 text-xs">
@@ -69,14 +74,14 @@ export default function BalanceCard() {
         </div>
       )}
 
-      <div className="mt-4 h-16 w-full">
+      <Link href="/analytics" className="block mt-4 h-16 w-full group">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={balanceHistory}>
             <YAxis hide domain={["dataMin - 100", "dataMax + 100"]} />
-            <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2.5} dot={false} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </Link>
     </div>
   );
 }

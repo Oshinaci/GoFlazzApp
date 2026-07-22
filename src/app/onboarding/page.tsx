@@ -26,6 +26,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { generateMnemonic as cryptoGenerateMnemonic, isValidMnemonic, walletFromMnemonic } from "@/lib/wallet";
 import { encryptData, decryptData } from "@/lib/encryption";
 import { WalletService } from "@/services/wallet.service";
+import { SecurityService } from "@/services/security.service";
 import { toast } from "sonner";
 import Logo from "@/components/layout/Logo";
 
@@ -201,9 +202,10 @@ export default function OnboardingPage() {
       if (isCreatingMode) {
         if (primaryWallet?.id) {
           const ethWallet = walletFromMnemonic(mnemonicPhrase, 0);
-          const encryptedMnemonic = await encryptData(mnemonicPhrase, pin);
-          const encryptedPrivateKey = await encryptData(ethWallet.privateKey, pin);
+          const encryptedMnemonic = await WalletService.encryptWallet(mnemonicPhrase, pin, user.id, primaryWallet.id);
+          const encryptedPrivateKey = await WalletService.encryptWallet(ethWallet.privateKey, pin, user.id, primaryWallet.id);
           await WalletService.updateWalletKeys(primaryWallet.id, user.id, encryptedMnemonic, encryptedPrivateKey);
+          SecurityService.wipeMemory({ mnemonicPhrase, privateKey: ethWallet.privateKey });
         } else {
           const walletResult = await createWallet("Primary Wallet", pin);
           if (!walletResult) {

@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { SecurityService, WalletSecurityRecord } from "@/services/security.service";
-import { hashPin } from "@/lib/encryption";
+import { WalletService } from "@/services/wallet.service";
 import { toast } from "sonner";
 
 const COMMON_PINS = [
@@ -37,8 +37,7 @@ export function useWalletSecurity() {
     }
 
     try {
-      const pin_hash = await hashPin(pin, user.id);
-      await SecurityService.upsertPIN(user.id, pin_hash);
+      await SecurityService.upsertPIN(user.id, pin);
       await fetchSecurityState();
       return true;
     } catch (err: any) {
@@ -50,35 +49,29 @@ export function useWalletSecurity() {
   const verifyPIN = async (pin: string): Promise<boolean> => {
     if (!user) return false;
 
-    const secData = await SecurityService.getWalletSecurity(user.id);
+    const lockCheck = await SecurityService.checkBruteForceLock(user.id);
+    if (lockCheck.isLocked) {
+      toast.error(`Wallet is temporarily locked due to too many failed attempts. Try again in ${lockCheck.remainingSeconds}s.`);
+      return false;
+    }
 
-    if (secData?.locked_until) {
-      const lockTime = new Date(secData.locked_until).getTime();
-      const now = new Date().getTime();
-      if (now < lockTime) {
-        const remainingSecs = Math.ceil((lockTime - now) / 1000);
-        toast.error(`Wallet is temporarily locked due to too many attempts. Try again in ${remainingSecs}s.`);
-        return false;
-      }
+    const secData = await SecurityService.getWalletSecurity(user.id);
+    if (!secData?.pin_hash) {
+      toast.error("No PIN is configured yet.");
+      return false;
     }
 
     try {
-      const inputHash = await hashPin(pin, user.id);
-      const storedHash = secData?.pin_hash;
+      const isValid = await SecurityService.verifyPin(user.id, pin);
 
-      if (!storedHash) {
-        toast.error("No PIN is configured yet.");
-        return false;
-      }
-
-      if (inputHash === storedHash) {
+      if (isValid) {
         await SecurityService.resetPinAttempts(user.id);
         await fetchSecurityState();
         return true;
       } else {
-        const { nextAttempts } = await SecurityService.recordFailedAttempt(user.id, secData?.pin_attempts || 0);
+        const { nextAttempts } = await SecurityService.recordFailedAttempt(user.id, secData.pin_attempts || 0);
         if (nextAttempts >= 5) {
-          toast.error("Too many failed attempts. Your wallet access is locked for 5 minutes.");
+          toast.error("Too many failed attempts. Your wallet access is locked for 15 minutes.");
         } else {
           toast.error(`Incorrect PIN. ${5 - nextAttempts} attempts remaining.`);
         }
@@ -87,6 +80,28 @@ export function useWalletSecurity() {
       }
     } catch (err: any) {
       toast.error("Failed to verify PIN: " + err.message);
+      return false;
+    }
+  };
+
+  const changePIN = async (oldPin: string, newPin: string): Promise<boolean> => {
+    if (!user) return false;
+    if (newPin.length < 6 || !/^\d+$/.test(newPin)) {
+      toast.error("New PIN must be exactly 6 digits.");
+      return false;
+    }
+    if (COMMON_PINS.includes(newPin)) {
+      toast.error("This PIN is too common. Please select a stronger PIN.");
+      return false;
+    }
+
+    try {
+      await WalletService.changePin(user.id, oldPin, newPin);
+      await fetchSecurityState();
+      toast.success("Security PIN updated and wallets re-encrypted.");
+      return true;
+    } catch (err: any) {
+      toast.error("Failed to change PIN: " + err.message);
       return false;
     }
   };
@@ -108,6 +123,8 @@ export function useWalletSecurity() {
     fetchSecurityState,
     setupPIN,
     verifyPIN,
+    changePIN,
     setBiometricsEnabled,
   };
 }
+

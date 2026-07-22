@@ -45,7 +45,7 @@ export function useWallet() {
   const [loading, setLoading] = useState(true);
 
   // Modular Sub-Hooks
-  const { securityState, fetchSecurityState, setupPIN, verifyPIN, setBiometricsEnabled } = useWalletSecurity();
+  const { securityState, fetchSecurityState, setupPIN, verifyPIN, changePIN, setBiometricsEnabled } = useWalletSecurity();
   const { contacts, fetchContacts, addContact, updateContact, deleteContact } = useWalletContacts();
   const { walletPrefs, fetchPreferences, updateWalletPref } = useWalletPreferences();
 
@@ -126,8 +126,9 @@ export function useWallet() {
       const privateKey = ethWallet.privateKey;
       const address = ethWallet.address;
 
-      const encryptedMnemonic = await encryptData(mnemonicPhrase, pin);
-      const encryptedPrivateKey = await encryptData(privateKey, pin);
+      const tempId = `temp_${Date.now()}`;
+      const encryptedMnemonic = await WalletService.encryptWallet(mnemonicPhrase, pin, user.id, tempId);
+      const encryptedPrivateKey = await WalletService.encryptWallet(privateKey, pin, user.id, tempId);
       const isFirst = wallets.length === 0;
 
       const newW = await WalletService.createWallet({
@@ -141,6 +142,9 @@ export function useWallet() {
       });
 
       if (newW) {
+        const finalEncMnemonic = await WalletService.encryptWallet(mnemonicPhrase, pin, user.id, newW.id);
+        const finalEncPrivateKey = await WalletService.encryptWallet(privateKey, pin, user.id, newW.id);
+        await WalletService.updateWalletKeys(newW.id, user.id, finalEncMnemonic, finalEncPrivateKey);
         await updateWalletPref(newW.id, activeNetwork);
       }
 
@@ -185,8 +189,9 @@ export function useWallet() {
         return false;
       }
 
-      const encryptedMnemonic = await encryptData(cleanPhrase, pin);
-      const encryptedPrivateKey = await encryptData(privateKey, pin);
+      const tempId = `temp_imp_${Date.now()}`;
+      const encryptedMnemonic = await WalletService.encryptWallet(cleanPhrase, pin, user.id, tempId);
+      const encryptedPrivateKey = await WalletService.encryptWallet(privateKey, pin, user.id, tempId);
       const isFirst = wallets.length === 0;
 
       const newW = await WalletService.createWallet({
@@ -200,6 +205,9 @@ export function useWallet() {
       });
 
       if (newW) {
+        const finalEncMnemonic = await WalletService.encryptWallet(cleanPhrase, pin, user.id, newW.id);
+        const finalEncPrivateKey = await WalletService.encryptWallet(privateKey, pin, user.id, newW.id);
+        await WalletService.updateWalletKeys(newW.id, user.id, finalEncMnemonic, finalEncPrivateKey);
         await updateWalletPref(newW.id, activeNetwork);
       }
 
@@ -306,12 +314,8 @@ export function useWallet() {
   const exportPrivateKey = async (walletId: string, pin: string): Promise<string | null> => {
     if (!user) return null;
     try {
-      const isPinValid = await verifyPIN(pin);
-      if (!isPinValid) return null;
-
-      const secrets = await WalletService.getEncryptedKeys(walletId, user.id);
-      const rawPriv = await decryptData(secrets.encrypted_private_key, pin);
-      return rawPriv;
+      const unlocked = await WalletService.unlockWallet(user.id, pin, walletId);
+      return unlocked.privateKey;
     } catch (err: any) {
       toast.error(err.message || "Export failed.");
       return null;
@@ -324,21 +328,32 @@ export function useWallet() {
   const exportMnemonic = async (walletId: string, pin: string): Promise<string | null> => {
     if (!user) return null;
     try {
-      const isPinValid = await verifyPIN(pin);
-      if (!isPinValid) return null;
-
-      const secrets = await WalletService.getEncryptedKeys(walletId, user.id);
-      if (!secrets.encrypted_mnemonic) {
+      const unlocked = await WalletService.unlockWallet(user.id, pin, walletId);
+      if (!unlocked.mnemonic) {
         toast.error("This wallet does not have a recovery phrase saved.");
         return null;
       }
-
-      const rawMnemonic = await decryptData(secrets.encrypted_mnemonic, pin);
-      return rawMnemonic;
+      return unlocked.mnemonic;
     } catch (err: any) {
       toast.error(err.message || "Export failed.");
       return null;
     }
+  };
+
+  /**
+   * Unlock wallet
+   */
+  const unlockWallet = async (pin: string, walletId?: string) => {
+    if (!user) return null;
+    return WalletService.unlockWallet(user.id, pin, walletId);
+  };
+
+  /**
+   * Lock wallet
+   */
+  const lockWallet = async () => {
+    if (!user) return;
+    return WalletService.lockWallet(user.id);
   };
 
   return {
@@ -352,6 +367,9 @@ export function useWallet() {
     refresh: refreshWallets,
     setupPIN,
     verifyPIN,
+    changePIN,
+    unlockWallet,
+    lockWallet,
     setBiometricsEnabled,
     createWallet,
     importWallet,

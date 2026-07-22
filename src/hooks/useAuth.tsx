@@ -130,10 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error.message };
       }
 
-      if (data.user) {
-        await fetchProfile(data.user.id, email, fullName);
-      }
-
       setLoading(false);
       return { error: null };
     } catch (e: any) {

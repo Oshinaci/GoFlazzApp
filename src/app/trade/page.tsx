@@ -46,6 +46,39 @@ interface TradingPair {
 
 const TRADING_PAIRS: TradingPair[] = [
   {
+    symbol: "BTC/USDT",
+    baseToken: "BTC",
+    quoteToken: "USDT",
+    price: 67200.50,
+    change24h: +1.85,
+    high24h: 68100.00,
+    low24h: 65900.00,
+    volume24h: "$4.8B",
+    chartData: [66000, 66300, 65900, 66800, 67100, 66900, 67400, 67100, 67500, 67200.5],
+  },
+  {
+    symbol: "BTC/ETH",
+    baseToken: "BTC",
+    quoteToken: "ETH",
+    price: 19.47,
+    change24h: -1.20,
+    high24h: 20.10,
+    low24h: 19.10,
+    volume24h: "14.2K ETH",
+    chartData: [19.8, 19.6, 19.9, 19.5, 19.3, 19.6, 19.47],
+  },
+  {
+    symbol: "BTC/USDC",
+    baseToken: "BTC",
+    quoteToken: "USDC",
+    price: 67195.00,
+    change24h: +1.82,
+    high24h: 68080.00,
+    low24h: 65890.00,
+    volume24h: "$1.4B",
+    chartData: [66000, 66300, 65900, 66800, 67100, 67195],
+  },
+  {
     symbol: "ETH/USDT",
     baseToken: "ETH",
     quoteToken: "USDT",
@@ -57,15 +90,15 @@ const TRADING_PAIRS: TradingPair[] = [
     chartData: [3340, 3320, 3380, 3410, 3390, 3430, 3415, 3460, 3440, 3480, 3450.8],
   },
   {
-    symbol: "BTC/USDT",
-    baseToken: "BTC",
-    quoteToken: "USDT",
-    price: 67200.50,
-    change24h: +1.85,
-    high24h: 68100.00,
-    low24h: 65900.00,
-    volume24h: "$4.8B",
-    chartData: [66000, 66300, 65900, 66800, 67100, 66900, 67400, 67100, 67500, 67200.5],
+    symbol: "ETH/BTC",
+    baseToken: "ETH",
+    quoteToken: "BTC",
+    price: 0.0513,
+    change24h: +1.54,
+    high24h: 0.0525,
+    low24h: 0.0501,
+    volume24h: "8.5K BTC",
+    chartData: [0.0505, 0.0508, 0.0510, 0.0513],
   },
   {
     symbol: "SOL/USDT",
@@ -79,6 +112,17 @@ const TRADING_PAIRS: TradingPair[] = [
     chartData: [158, 157, 159, 156, 154, 155, 153, 152, 155, 154.2],
   },
   {
+    symbol: "SOL/BTC",
+    baseToken: "SOL",
+    quoteToken: "BTC",
+    price: 0.00229,
+    change24h: -2.71,
+    high24h: 0.00241,
+    low24h: 0.00225,
+    volume24h: "420 BTC",
+    chartData: [0.00235, 0.00231, 0.00229],
+  },
+  {
     symbol: "ARB/USDT",
     baseToken: "ARB",
     quoteToken: "USDT",
@@ -88,6 +132,17 @@ const TRADING_PAIRS: TradingPair[] = [
     low24h: 1.10,
     volume24h: "$180M",
     chartData: [1.11, 1.10, 1.12, 1.14, 1.13, 1.16, 1.15, 1.19, 1.17, 1.18],
+  },
+  {
+    symbol: "BNB/USDT",
+    baseToken: "BNB",
+    quoteToken: "USDT",
+    price: 580.40,
+    change24h: +0.65,
+    high24h: 588.00,
+    low24h: 575.10,
+    volume24h: "$340M",
+    chartData: [576, 578, 582, 580.4],
   },
 ];
 
@@ -113,6 +168,25 @@ export default function TradePage() {
   // Selected trading pair
   const [selectedPair, setSelectedPair] = useState<TradingPair>(TRADING_PAIRS[0]);
   const [showPairSelector, setShowPairSelector] = useState<boolean>(false);
+  const [pairSearchQuery, setPairSearchQuery] = useState<string>("");
+  const [pairCategoryFilter, setPairCategoryFilter] = useState<string>("ALL");
+
+  // Filtered trading pairs
+  const filteredPairs = useMemo(() => {
+    return TRADING_PAIRS.filter((p) => {
+      const q = pairSearchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        p.symbol.toLowerCase().includes(q) ||
+        p.baseToken.toLowerCase().includes(q) ||
+        p.quoteToken.toLowerCase().includes(q);
+
+      if (pairCategoryFilter === "BTC") return matchesSearch && (p.baseToken === "BTC" || p.quoteToken === "BTC");
+      if (pairCategoryFilter === "USDT") return matchesSearch && p.quoteToken === "USDT";
+      if (pairCategoryFilter === "ETH") return matchesSearch && (p.baseToken === "ETH" || p.quoteToken === "ETH");
+      return matchesSearch;
+    });
+  }, [pairSearchQuery, pairCategoryFilter]);
 
   // Chart state
   const [timeframe, setTimeframe] = useState<"1H" | "4H" | "24H" | "1W">("24H");
@@ -124,8 +198,9 @@ export default function TradePage() {
   const [limitPrice, setLimitPrice] = useState<string>(selectedPair.price.toString());
   const [orderAmount, setOrderAmount] = useState<string>("0.1");
 
-  // Orders history state
-  const [activeTab, setActiveTab] = useState<"orders" | "history">("orders");
+  // Console active main tab: 'trade' | 'book' | 'orders' | 'history'
+  const [consoleTab, setConsoleTab] = useState<"trade" | "book" | "orders" | "history">("trade");
+  const [showOrderBook, setShowOrderBook] = useState<boolean>(true);
   const [userOrders, setUserOrders] = useState<OrderItem[]>([
     {
       id: "ord_101",
@@ -294,7 +369,7 @@ export default function TradePage() {
     <main className="min-h-screen bg-background pb-24 text-foreground relative">
       <ActionPageHeader title="GoFlazz Trade" backHref="/" />
 
-      <div className="container mt-3 max-w-md space-y-4 px-4">
+      <div className="container mt-3 max-w-md md:max-w-3xl lg:max-w-4xl space-y-4 px-4 mx-auto">
         {/* Trade Mode Switcher */}
         <div className="flex rounded-2xl border border-border bg-surface p-1 shadow-xs">
           <button
@@ -325,18 +400,30 @@ export default function TradePage() {
         {tradeMode === "spot" && (
           <div className="space-y-4">
             {/* Pair Selector Header Banner */}
-            <div className="glass-card p-3.5 flex items-center justify-between border-border relative">
+            <div className={`glass-card p-3.5 flex items-center justify-between border-border relative transition-all ${showPairSelector ? "z-[60]" : "z-10"}`}>
+              {/* Soft Click-outside backdrop with translucent blur */}
+              {showPairSelector && (
+                <div
+                  className="fixed inset-0 z-40 bg-black/30 dark:bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+                  onClick={() => setShowPairSelector(false)}
+                />
+              )}
+
               <button
                 onClick={() => setShowPairSelector(!showPairSelector)}
-                className="flex items-center gap-2 hover:opacity-80 transition"
+                className={`flex items-center gap-2 transition group relative z-50 px-2 py-1 rounded-xl ${
+                  showPairSelector
+                    ? "bg-primary/10 border border-primary/40 ring-2 ring-primary/20"
+                    : "hover:opacity-80"
+                }`}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-xs">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-xs group-hover:scale-105 transition">
                   {selectedPair.baseToken}
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-1 font-bold text-sm">
                     <span>{selectedPair.symbol}</span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${showPairSelector ? "rotate-180 text-primary" : ""}`} />
                   </div>
                   <div className="text-[10px] text-muted-foreground font-mono">
                     24h Vol: {selectedPair.volume24h}
@@ -344,7 +431,7 @@ export default function TradePage() {
                 </div>
               </button>
 
-              <div className="text-right">
+              <div className="text-right relative z-50">
                 <div className="font-mono font-bold text-base text-foreground">
                   ${currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </div>
@@ -358,34 +445,100 @@ export default function TradePage() {
                 </div>
               </div>
 
-              {/* Pair Selector Dropdown */}
-              {showPairSelector && (
-                <div className="absolute top-16 left-0 right-0 z-30 glass-card p-2 border border-border shadow-2xl space-y-1">
-                  <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Select Trading Pair
-                  </p>
-                  {TRADING_PAIRS.map((pair) => (
-                    <button
-                      key={pair.symbol}
-                      onClick={() => {
-                        setSelectedPair(pair);
-                        setShowPairSelector(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-xs transition ${
-                        selectedPair.symbol === pair.symbol
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "hover:bg-foreground/5"
-                      }`}
-                    >
-                      <span className="font-bold">{pair.symbol}</span>
-                      <span className="font-mono">${pair.price.toLocaleString()}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Opaque Adaptive Searchable Pair Selector Dropdown */}
+              <AnimatePresence>
+                {showPairSelector && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface dark:bg-[#0B0F1A] border border-border/90 shadow-2xl space-y-3 max-h-[400px] flex flex-col rounded-2xl p-3.5 ring-1 ring-border/60 text-foreground opacity-100"
+                  >
+                    {/* Header Label */}
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground border-b border-border/40 pb-1.5">
+                      <span>Select Trading Pair</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">{filteredPairs.length} Available</span>
+                    </div>
+
+                    {/* Search Input */}
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="Search pairs (e.g. BTC, ETH)..."
+                        value={pairSearchQuery}
+                        onChange={(e) => setPairSearchQuery(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 bg-muted/60 dark:bg-slate-900/80 border border-border/70 rounded-xl text-xs font-medium text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition"
+                      />
+                    </div>
+
+                    {/* Category Filter Chips */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 text-[10px] font-semibold custom-scrollbar">
+                      {(["ALL", "BTC", "USDT", "ETH"] as const).map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setPairCategoryFilter(cat)}
+                          className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
+                            pairCategoryFilter === cat
+                              ? "bg-primary text-white shadow-xs"
+                              : "bg-muted/50 dark:bg-slate-800/80 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {cat === "ALL" ? "All Pairs" : `${cat} Pairs`}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Scrollable Pairs List */}
+                    <div className="overflow-y-auto space-y-1 flex-1 pr-1 custom-scrollbar max-h-[240px]">
+                      {filteredPairs.length === 0 ? (
+                        <div className="text-center py-6 text-xs text-muted-foreground">
+                          No trading pairs found matching &quot;{pairSearchQuery}&quot;
+                        </div>
+                      ) : (
+                        filteredPairs.map((pair) => (
+                          <button
+                            key={pair.symbol}
+                            onClick={() => {
+                              setSelectedPair(pair);
+                              setShowPairSelector(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs transition ${
+                              selectedPair.symbol === pair.symbol
+                                ? "bg-primary/15 border border-primary/40 text-primary font-bold shadow-xs"
+                                : "hover:bg-muted/60 dark:hover:bg-slate-800/80 border border-transparent hover:border-border/60"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-[10px] font-bold text-primary">
+                                {pair.baseToken}
+                              </span>
+                              <div className="text-left">
+                                <div className="font-bold">{pair.symbol}</div>
+                                <div className="text-[10px] text-muted-foreground">Vol {pair.volume24h}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono font-bold">${pair.price.toLocaleString()}</div>
+                              <div
+                                className={`text-[10px] font-semibold ${
+                                  pair.change24h >= 0 ? "text-success" : "text-danger"
+                                }`}
+                              >
+                                {pair.change24h >= 0 ? "+" : ""}{pair.change24h}%
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Interactive Price Chart Box */}
+            {/* Price Chart Box */}
             <div className="glass-card p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1 bg-surface rounded-xl p-1 border border-border text-[11px]">
@@ -409,7 +562,7 @@ export default function TradePage() {
               </div>
 
               {/* SVG Sparkline / Line Chart Representation */}
-              <div className="h-36 w-full relative flex items-end pt-4 pb-1">
+              <div className="h-32 w-full relative flex items-end pt-2 pb-1">
                 <svg className="h-full w-full overflow-visible" viewBox="0 0 100 50" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -417,12 +570,10 @@ export default function TradePage() {
                       <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
                     </linearGradient>
                   </defs>
-                  {/* Chart fill */}
                   <polygon
                     points={`0,50 0,25 10,28 20,20 30,15 40,22 50,18 60,12 70,16 80,8 90,14 100,5 100,50`}
                     fill="url(#chartGradient)"
                   />
-                  {/* Chart line */}
                   <polyline
                     fill="none"
                     stroke="#3B82F6"
@@ -430,213 +581,411 @@ export default function TradePage() {
                     points="0,25 10,28 20,20 30,15 40,22 50,18 60,12 70,16 80,8 90,14 100,5"
                   />
                 </svg>
-                {/* Current price marker dot */}
-                <div className="absolute top-2 right-0 flex items-center gap-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md animate-pulse">
+                <div className="absolute top-1 right-0 flex items-center gap-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md animate-pulse">
                   ${currentPrice.toFixed(2)}
                 </div>
               </div>
             </div>
 
-            {/* Order Book Depth & Form Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* ORDER BOOK MINI PANEL */}
-              <div className="glass-card p-3 space-y-2">
-                <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/60 pb-1.5">
-                  <span>Price (USDT)</span>
-                  <span>Amount</span>
-                </div>
-
-                {/* Asks (Sell Orders) */}
-                <div className="space-y-1 font-mono text-xs">
-                  {mockAsks.map((ask, i) => (
-                    <div key={i} className="flex justify-between items-center text-danger">
-                      <span>{ask.price}</span>
-                      <span className="text-muted-foreground">{ask.amount}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Spread */}
-                <div className="py-1 text-center font-mono font-bold text-xs text-foreground bg-surface rounded-lg border border-border">
-                  ${currentPrice.toFixed(2)}
-                </div>
-
-                {/* Bids (Buy Orders) */}
-                <div className="space-y-1 font-mono text-xs">
-                  {mockBids.map((bid, i) => (
-                    <div key={i} className="flex justify-between items-center text-success">
-                      <span>{bid.price}</span>
-                      <span className="text-muted-foreground">{bid.amount}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* BUY / SELL ORDER EXECUTION FORM */}
-              <div className="glass-card p-3.5 space-y-3">
-                {/* Buy vs Sell side tabs */}
-                <div className="flex rounded-xl bg-surface p-1 border border-border">
+            {/* UNIFIED TRADING, ORDER BOOK & ORDERS CONSOLE */}
+            <div className="glass-card p-3.5 space-y-3 border-border shadow-xl">
+              {/* Navigation Header & Order Book Toggle */}
+              <div className="flex items-center justify-between border-b border-border pb-2 gap-2">
+                <div className="flex text-xs font-bold gap-1 overflow-x-auto pb-0.5 custom-scrollbar">
                   <button
-                    onClick={() => setOrderSide("buy")}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                      orderSide === "buy" ? "bg-success text-white" : "text-muted-foreground"
+                    onClick={() => setConsoleTab("trade")}
+                    className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
+                      consoleTab === "trade"
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
                     }`}
                   >
-                    BUY
+                    <BarChart2 className="h-3.5 w-3.5" />
+                    <span>Place Order</span>
                   </button>
+
                   <button
-                    onClick={() => setOrderSide("sell")}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                      orderSide === "sell" ? "bg-danger text-white" : "text-muted-foreground"
+                    onClick={() => setConsoleTab("book")}
+                    className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
+                      consoleTab === "book"
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
                     }`}
                   >
-                    SELL
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    <span>Order Book</span>
+                  </button>
+
+                  <button
+                    onClick={() => setConsoleTab("orders")}
+                    className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
+                      consoleTab === "orders"
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>
+                      Active ({userOrders.filter((o) => o.status === "open").length})
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setConsoleTab("history")}
+                    className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
+                      consoleTab === "history"
+                        ? "bg-primary text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>History</span>
                   </button>
                 </div>
 
-                {/* Limit vs Market selector */}
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Order Type:</span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setOrderType("limit")}
-                      className={`px-2 py-0.5 rounded font-semibold transition ${
-                        orderType === "limit" ? "bg-primary/20 text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      Limit
-                    </button>
-                    <button
-                      onClick={() => setOrderType("market")}
-                      className={`px-2 py-0.5 rounded font-semibold transition ${
-                        orderType === "market" ? "bg-primary/20 text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      Market
-                    </button>
-                  </div>
-                </div>
-
-                {/* Inputs */}
-                <div className="space-y-2">
-                  {orderType === "limit" && (
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-muted-foreground uppercase font-semibold">Price (USDT)</label>
-                      <input
-                        type="number"
-                        value={limitPrice}
-                        onChange={(e) => setLimitPrice(e.target.value)}
-                        className="w-full bg-surface border border-border rounded-xl px-3 py-1.5 text-xs font-mono text-foreground outline-none focus:border-primary"
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground uppercase font-semibold">
-                      Amount ({selectedPair.baseToken})
-                    </label>
-                    <input
-                      type="number"
-                      value={orderAmount}
-                      onChange={(e) => setOrderAmount(e.target.value)}
-                      className="w-full bg-surface border border-border rounded-xl px-3 py-1.5 text-xs font-mono text-foreground outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  {/* Percentage buttons */}
-                  <div className="grid grid-cols-4 gap-1 pt-1">
-                    {[25, 50, 75, 100].map((pct) => (
-                      <button
-                        key={pct}
-                        onClick={() => {
-                          setOrderAmount((pct * 0.01 * 2).toFixed(3));
-                        }}
-                        className="py-1 rounded bg-surface border border-border text-[10px] font-semibold text-muted-foreground hover:text-foreground transition"
-                      >
-                        {pct}%
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="pt-2 flex justify-between text-xs text-muted-foreground">
-                    <span>Order Total:</span>
-                    <span className="font-mono font-bold text-foreground">${orderTotal.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-
-                {/* Order Submit Button */}
-                <button
-                  onClick={handlePlaceOrder}
-                  className={`w-full py-3 rounded-xl font-bold text-xs text-white shadow-md transition active:scale-95 ${
-                    orderSide === "buy" ? "bg-success hover:bg-success/90" : "bg-danger hover:bg-danger/90"
-                  }`}
-                >
-                  Place {orderSide.toUpperCase()} {orderType.toUpperCase()} Order
-                </button>
-              </div>
-            </div>
-
-            {/* ORDERS & HISTORY PANEL */}
-            <div className="glass-card p-4 space-y-3">
-              <div className="flex border-b border-border gap-4 text-xs font-semibold">
-                <button
-                  onClick={() => setActiveTab("orders")}
-                  className={`pb-2 transition border-b-2 ${
-                    activeTab === "orders" ? "border-primary text-primary" : "border-transparent text-muted-foreground"
-                  }`}
-                >
-                  Active Orders ({userOrders.filter((o) => o.status === "open").length})
-                </button>
-                <button
-                  onClick={() => setActiveTab("history")}
-                  className={`pb-2 transition border-b-2 ${
-                    activeTab === "history" ? "border-primary text-primary" : "border-transparent text-muted-foreground"
-                  }`}
-                >
-                  Order History
-                </button>
+                {consoleTab === "trade" && (
+                  <button
+                    onClick={() => setShowOrderBook(!showOrderBook)}
+                    className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl bg-surface border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition whitespace-nowrap shrink-0"
+                    title={showOrderBook ? "Collapse adjacent Order Book" : "Expand adjacent Order Book"}
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+                    <span className="hidden sm:inline">{showOrderBook ? "Hide Order Book" : "Show Order Book"}</span>
+                    <span className="sm:hidden">{showOrderBook ? "Book Off" : "Book On"}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${showOrderBook ? "rotate-180" : ""}`} />
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-2">
-                {userOrders
-                  .filter((o) => (activeTab === "orders" ? o.status === "open" : o.status !== "open"))
-                  .map((ord) => (
-                    <div
-                      key={ord.id}
-                      className="p-3 rounded-xl border border-border bg-surface flex items-center justify-between text-xs"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`font-bold uppercase text-[10px] px-1.5 py-0.5 rounded ${
-                              ord.side === "buy" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
+              {/* TAB 1: PLACE ORDER (EXECUTION FORM + ADJACENT COLLAPSIBLE ORDER BOOK) */}
+              {consoleTab === "trade" && (
+                <div className="space-y-3">
+                  <div className={`grid grid-cols-1 ${showOrderBook ? "md:grid-cols-12" : ""} gap-3.5 items-start`}>
+                    {/* LEFT COLUMN: PLACE ORDER EXECUTION FORM */}
+                    <div className={`${showOrderBook ? "md:col-span-7" : "w-full"} space-y-3`}>
+                      {/* Buy / Sell Side Toggle & Limit / Market Order Type */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1 flex rounded-xl bg-surface p-1 border border-border">
+                          <button
+                            onClick={() => setOrderSide("buy")}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                              orderSide === "buy" ? "bg-success text-white shadow-xs" : "text-muted-foreground"
                             }`}
                           >
-                            {ord.side}
-                          </span>
-                          <span className="font-bold">{ord.pair}</span>
-                          <span className="text-muted-foreground text-[10px]">{ord.type}</span>
+                            BUY
+                          </button>
+                          <button
+                            onClick={() => setOrderSide("sell")}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
+                              orderSide === "sell" ? "bg-danger text-white shadow-xs" : "text-muted-foreground"
+                            }`}
+                          >
+                            SELL
+                          </button>
                         </div>
-                        <div className="font-mono text-[11px] text-muted-foreground">
-                          {ord.amount} @ ${ord.price.toLocaleString()} (${ord.total})
+
+                        <div className="flex gap-1 bg-surface p-1 rounded-xl border border-border text-xs">
+                          <button
+                            onClick={() => setOrderType("limit")}
+                            className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                              orderType === "limit" ? "bg-primary/20 text-primary" : "text-muted-foreground"
+                            }`}
+                          >
+                            Limit
+                          </button>
+                          <button
+                            onClick={() => setOrderType("market")}
+                            className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                              orderType === "market" ? "bg-primary/20 text-primary" : "text-muted-foreground"
+                            }`}
+                          >
+                            Market
+                          </button>
                         </div>
                       </div>
 
-                      {ord.status === "open" ? (
-                        <button
-                          onClick={() => handleCancelOrder(ord.id)}
-                          className="px-2.5 py-1 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 transition"
-                        >
-                          Cancel
-                        </button>
-                      ) : (
-                        <span className="text-[10px] font-semibold text-muted-foreground capitalize">
-                          {ord.status}
-                        </span>
-                      )}
+                      {/* Inputs */}
+                      <div className="space-y-2.5">
+                        {orderType === "limit" && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center text-[10px]">
+                              <label className="text-muted-foreground uppercase font-semibold">
+                                Price ({selectedPair.quoteToken})
+                              </label>
+                              <span className="text-muted-foreground">Market: ${currentPrice.toFixed(2)}</span>
+                            </div>
+                            <input
+                              type="number"
+                              value={limitPrice}
+                              onChange={(e) => setLimitPrice(e.target.value)}
+                              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs font-mono font-bold text-foreground outline-none focus:border-primary transition"
+                            />
+                          </div>
+                        )}
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-muted-foreground uppercase font-semibold">
+                            Amount ({selectedPair.baseToken})
+                          </label>
+                          <input
+                            type="number"
+                            value={orderAmount}
+                            onChange={(e) => setOrderAmount(e.target.value)}
+                            className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs font-mono font-bold text-foreground outline-none focus:border-primary transition"
+                          />
+                        </div>
+
+                        {/* Quick Percentage Pills */}
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[25, 50, 75, 100].map((pct) => (
+                            <button
+                              key={pct}
+                              onClick={() => setOrderAmount((pct * 0.01 * 0.5).toFixed(3))}
+                              className="py-1 rounded-lg bg-surface border border-border text-[10px] font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition"
+                            >
+                              {pct}%
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex justify-between items-center text-xs pt-1 border-t border-border/40">
+                          <span className="text-muted-foreground font-medium">Order Total:</span>
+                          <span className="font-mono font-bold text-foreground text-sm">
+                            ${orderTotal.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Submit Order Button */}
+                      <button
+                        onClick={handlePlaceOrder}
+                        className={`w-full py-3 rounded-xl font-bold text-xs text-white shadow-md transition active:scale-95 ${
+                          orderSide === "buy" ? "bg-success hover:bg-success/90" : "bg-danger hover:bg-danger/90"
+                        }`}
+                      >
+                        Place {orderSide.toUpperCase()} {orderType.toUpperCase()} Order
+                      </button>
                     </div>
-                  ))}
-              </div>
+
+                    {/* RIGHT COLUMN: COLLAPSIBLE ADJACENT ORDER BOOK PANEL */}
+                    <AnimatePresence mode="wait">
+                      {showOrderBook && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.96, height: 0 }}
+                          animate={{ opacity: 1, scale: 1, height: "auto" }}
+                          exit={{ opacity: 0, scale: 0.96, height: 0 }}
+                          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                          className="md:col-span-5 rounded-2xl border border-border/80 bg-surface dark:bg-surface/80 p-3 space-y-2 text-xs font-mono flex flex-col justify-between shadow-xs overflow-hidden"
+                        >
+                          <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+                            <div className="flex items-center gap-1.5 font-bold text-foreground text-xs">
+                              <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+                              <span>Order Book</span>
+                            </div>
+                            <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider bg-muted/60 dark:bg-slate-800/60 px-1.5 py-0.5 rounded border border-border">
+                              {selectedPair.symbol}
+                            </span>
+                          </div>
+
+                          {/* Order Book Column Headers */}
+                          <div className="flex justify-between text-[10px] font-semibold text-muted-foreground uppercase border-b border-border/40 pb-1">
+                            <span>Price ({selectedPair.quoteToken})</span>
+                            <span>Amount</span>
+                          </div>
+
+                          {/* Asks (Sell Orders) */}
+                          <div className="space-y-1">
+                            {mockAsks.map((ask, i) => {
+                              const amountVal = parseFloat(ask.amount);
+                              const maxAmount = 2.5;
+                              const depthPct = Math.min(100, Math.max(12, (amountVal / maxAmount) * 100));
+                              return (
+                                <motion.button
+                                  key={`ask-${i}`}
+                                  whileHover={{ x: 2 }}
+                                  transition={{ duration: 0.15 }}
+                                  onClick={() => setLimitPrice(ask.price)}
+                                  className="w-full relative overflow-hidden flex justify-between items-center text-danger hover:bg-danger/10 px-1.5 py-1 rounded-md transition text-left group"
+                                  title="Click price to autofill limit order"
+                                >
+                                  {/* Liquidity Depth Bar */}
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 bg-danger/10 dark:bg-danger/15 rounded-r-md transition-all duration-300 pointer-events-none"
+                                    style={{ width: `${depthPct}%` }}
+                                  />
+                                  <span className="font-bold relative z-10 group-hover:underline">{ask.price}</span>
+                                  <span className="text-muted-foreground text-[11px] relative z-10">{ask.amount}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Spread & Current Price Banner */}
+                          <div className="py-1 my-0.5 text-center font-bold text-foreground bg-muted/40 dark:bg-slate-900/60 rounded-xl border border-border/80 shadow-2xs flex items-center justify-between px-2 text-[11px]">
+                            <span className="text-[9px] text-muted-foreground font-sans uppercase">Price:</span>
+                            <span className="text-xs font-bold text-primary">${currentPrice.toFixed(2)}</span>
+                            <span className="text-[9px] text-success font-sans font-semibold">0.08% spread</span>
+                          </div>
+
+                          {/* Bids (Buy Orders) */}
+                          <div className="space-y-1">
+                            {mockBids.map((bid, i) => {
+                              const amountVal = parseFloat(bid.amount);
+                              const maxAmount = 2.5;
+                              const depthPct = Math.min(100, Math.max(12, (amountVal / maxAmount) * 100));
+                              return (
+                                <motion.button
+                                  key={`bid-${i}`}
+                                  whileHover={{ x: 2 }}
+                                  transition={{ duration: 0.15 }}
+                                  onClick={() => setLimitPrice(bid.price)}
+                                  className="w-full relative overflow-hidden flex justify-between items-center text-success hover:bg-success/10 px-1.5 py-1 rounded-md transition text-left group"
+                                  title="Click price to autofill limit order"
+                                >
+                                  {/* Liquidity Depth Bar */}
+                                  <div
+                                    className="absolute right-0 top-0 bottom-0 bg-success/10 dark:bg-success/15 rounded-r-md transition-all duration-300 pointer-events-none"
+                                    style={{ width: `${depthPct}%` }}
+                                  />
+                                  <span className="font-bold relative z-10 group-hover:underline">{bid.price}</span>
+                                  <span className="text-muted-foreground text-[11px] relative z-10">{bid.amount}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="text-[9px] text-muted-foreground text-center pt-1 font-sans italic border-t border-border/40">
+                            Click price to autofill
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: FULL ORDER BOOK */}
+              {consoleTab === "book" && (
+                <div className="space-y-2 p-1 font-mono text-xs">
+                  <div className="flex justify-between text-[10px] font-semibold uppercase text-muted-foreground border-b border-border pb-1">
+                    <span>Price ({selectedPair.quoteToken})</span>
+                    <span>Amount ({selectedPair.baseToken})</span>
+                    <span>Total</span>
+                  </div>
+
+                  {/* Asks */}
+                  <div className="space-y-1">
+                    {mockAsks.map((ask, i) => (
+                      <div key={i} className="flex justify-between text-danger">
+                        <span>{ask.price}</span>
+                        <span className="text-muted-foreground">{ask.amount}</span>
+                        <span className="text-foreground">{ask.total}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Market Spread */}
+                  <div className="py-1.5 text-center font-bold text-foreground bg-surface rounded-xl border border-border my-2">
+                    Spread: ${(currentPrice * 0.0008).toFixed(2)} | Current: ${currentPrice.toFixed(2)}
+                  </div>
+
+                  {/* Bids */}
+                  <div className="space-y-1">
+                    {mockBids.map((bid, i) => (
+                      <div key={i} className="flex justify-between text-success">
+                        <span>{bid.price}</span>
+                        <span className="text-muted-foreground">{bid.amount}</span>
+                        <span className="text-foreground">{bid.total}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: ACTIVE ORDERS */}
+              {consoleTab === "orders" && (
+                <div className="space-y-2">
+                  {userOrders.filter((o) => o.status === "open").length === 0 ? (
+                    <div className="text-center py-6 text-xs text-muted-foreground">
+                      No open orders for {selectedPair.symbol}
+                    </div>
+                  ) : (
+                    userOrders
+                      .filter((o) => o.status === "open")
+                      .map((ord) => (
+                        <div
+                          key={ord.id}
+                          className="p-3 rounded-xl border border-border bg-surface flex items-center justify-between text-xs"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`font-bold uppercase text-[10px] px-1.5 py-0.5 rounded ${
+                                  ord.side === "buy" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
+                                }`}
+                              >
+                                {ord.side}
+                              </span>
+                              <span className="font-bold">{ord.pair}</span>
+                              <span className="text-muted-foreground text-[10px]">{ord.type}</span>
+                            </div>
+                            <div className="font-mono text-[11px] text-muted-foreground">
+                              {ord.amount} @ ${ord.price.toLocaleString()} (${ord.total})
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleCancelOrder(ord.id)}
+                            className="px-2.5 py-1 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 transition"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
+
+              {/* TAB 4: ORDER HISTORY */}
+              {consoleTab === "history" && (
+                <div className="space-y-2">
+                  {userOrders.filter((o) => o.status !== "open").length === 0 ? (
+                    <div className="text-center py-6 text-xs text-muted-foreground">
+                      No order history found
+                    </div>
+                  ) : (
+                    userOrders
+                      .filter((o) => o.status !== "open")
+                      .map((ord) => (
+                        <div
+                          key={ord.id}
+                          className="p-3 rounded-xl border border-border bg-surface flex items-center justify-between text-xs"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`font-bold uppercase text-[10px] px-1.5 py-0.5 rounded ${
+                                  ord.side === "buy" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
+                                }`}
+                              >
+                                {ord.side}
+                              </span>
+                              <span className="font-bold">{ord.pair}</span>
+                              <span className="text-muted-foreground text-[10px]">{ord.timestamp}</span>
+                            </div>
+                            <div className="font-mono text-[11px] text-muted-foreground">
+                              {ord.amount} @ ${ord.price.toLocaleString()} (${ord.total})
+                            </div>
+                          </div>
+
+                          <span className="text-[10px] font-bold text-muted-foreground capitalize bg-background px-2 py-1 rounded-md border border-border">
+                            {ord.status}
+                          </span>
+                        </div>
+                      ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

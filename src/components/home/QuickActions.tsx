@@ -11,7 +11,7 @@ interface QuickAction {
 const QUICK_ACTIONS: QuickAction[] = [
   { id: "send", label: "Send", href: "/send", icon: Send },
   { id: "receive", label: "Receive", href: "/receive", icon: Download },
-  { id: "swap", label: "Swap", href: "/swap", icon: ArrowDownUp },
+  { id: "trade", label: "Trade", href: "/trade", icon: BarChart2 },
   { id: "bridge", label: "Bridge", href: "/bridge", icon: RefreshCcw },
   { id: "nfts", label: "NFTs", icon: ImageIcon, href: "/nfts" },
   { id: "address-book", label: "Contacts", href: "/address-book", icon: Contact2 },

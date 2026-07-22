@@ -11,6 +11,23 @@ const isPlaceholder =
   rawKey.length < 20 || 
   rawKey.includes("placeholder");
 
+function safeStringify(obj: any): string {
+  try {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (value instanceof HTMLElement || value?.constructor?.name === "FiberNode" || seen.has(value)) {
+          return undefined;
+        }
+        seen.add(value);
+      }
+      return value;
+    });
+  } catch (_) {
+    return "[]";
+  }
+}
+
 // ----------------------------------------------------
 // Mock Client Implementation for Offline/Local-Only Mode
 // ----------------------------------------------------
@@ -189,13 +206,19 @@ class MockSupabaseClient {
   from = (table: string) => {
     const getItems = () => {
       if (typeof window === "undefined") return [];
-      const data = localStorage.getItem(`mock_db_${table}`);
-      return data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem(`mock_db_${table}`);
+        return data ? JSON.parse(data) : [];
+      } catch (_) {
+        return [];
+      }
     };
 
     const setItems = (items: any[]) => {
       if (typeof window === "undefined") return;
-      localStorage.setItem(`mock_db_${table}`, JSON.stringify(items));
+      try {
+        localStorage.setItem(`mock_db_${table}`, safeStringify(items));
+      } catch (_) {}
     };
 
     let queryFilters: Array<(item: any) => boolean> = [];

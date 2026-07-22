@@ -31,7 +31,7 @@ export default function HomePage() {
               <TrendingUp className="h-4 w-4 text-primary" />
               <span>Watchlist Highlights</span>
             </div>
-            <Link href="/watchlist" className="flex items-center gap-1 text-xs text-primary hover:underline font-semibold">
+            <Link href="/trade" className="flex items-center gap-1 text-xs text-primary hover:underline font-semibold">
               <span>View Markets</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
@@ -41,7 +41,7 @@ export default function HomePage() {
             {topWatchlist.map((item, idx) => (
               <Link
                 key={idx}
-                href="/watchlist"
+                href="/trade"
                 className="rounded-2xl border border-border/60 bg-background/50 p-2.5 transition hover:border-primary/50 text-left"
               >
                 <div className="text-xs font-bold text-foreground">{item.symbol}</div>

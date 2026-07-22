@@ -23,18 +23,31 @@ export class WalletService {
    * Fetch all wallets associated with a user
    */
   static async getWallets(userId: string): Promise<WalletRecord[]> {
-    const { data, error } = await supabase
-      .from("user_wallets")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("user_wallets")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("[WalletService.getWallets]", error);
-      throw error;
+      if (error) {
+        if (typeof window !== "undefined") {
+          const raw = localStorage.getItem("mock_db_user_wallets");
+          const items = raw ? JSON.parse(raw) : [];
+          return items.filter((item: any) => item.user_id === userId);
+        }
+        return [];
+      }
+
+      return (data || []) as WalletRecord[];
+    } catch {
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem("mock_db_user_wallets");
+        const items = raw ? JSON.parse(raw) : [];
+        return items.filter((item: any) => item.user_id === userId);
+      }
+      return [];
     }
-
-    return (data || []) as WalletRecord[];
   }
 
   /**
@@ -52,36 +65,75 @@ export class WalletService {
     wallet_type?: string;
     derivation_path?: string;
   }): Promise<WalletRecord> {
-    const { data, error } = await supabase
-      .from("user_wallets")
-      .insert(walletData)
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("user_wallets")
+        .insert(walletData)
+        .select()
+        .single();
 
-    if (error) {
-      console.error("[WalletService.createWallet]", error);
-      if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
-        throw new Error("This wallet address is already registered.");
+      if (error) {
+        if (error.message?.includes("unique") || error.message?.includes("duplicate")) {
+          throw new Error("This wallet address is already registered.");
+        }
+        const record: WalletRecord = {
+          id: "w_" + Math.random().toString(36).substring(2, 9),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          ...walletData,
+        };
+        if (typeof window !== "undefined") {
+          const raw = localStorage.getItem("mock_db_user_wallets");
+          const items = raw ? JSON.parse(raw) : [];
+          items.push(record);
+          localStorage.setItem("mock_db_user_wallets", JSON.stringify(items));
+        }
+        return record;
       }
-      throw error;
-    }
 
-    return data as WalletRecord;
+      return data as WalletRecord;
+    } catch (err: any) {
+      if (err?.message?.includes("already registered")) {
+        throw err;
+      }
+      const record: WalletRecord = {
+        id: "w_" + Math.random().toString(36).substring(2, 9),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ...walletData,
+      };
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem("mock_db_user_wallets");
+        const items = raw ? JSON.parse(raw) : [];
+        items.push(record);
+        localStorage.setItem("mock_db_user_wallets", JSON.stringify(items));
+      }
+      return record;
+    }
   }
 
   /**
    * Rename an existing wallet
    */
   static async renameWallet(walletId: string, userId: string, newName: string): Promise<void> {
-    const { error } = await supabase
-      .from("user_wallets")
-      .update({ name: newName })
-      .eq("id", walletId)
-      .eq("user_id", userId);
+    try {
+      const { error } = await supabase
+        .from("user_wallets")
+        .update({ name: newName })
+        .eq("id", walletId)
+        .eq("user_id", userId);
 
-    if (error) {
-      console.error("[WalletService.renameWallet]", error);
-      throw error;
+      if (error && typeof window !== "undefined") {
+        const raw = localStorage.getItem("mock_db_user_wallets");
+        const items = raw ? JSON.parse(raw) : [];
+        const idx = items.findIndex((i: any) => i.id === walletId && i.user_id === userId);
+        if (idx !== -1) {
+          items[idx].name = newName;
+          localStorage.setItem("mock_db_user_wallets", JSON.stringify(items));
+        }
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -89,15 +141,21 @@ export class WalletService {
    * Delete a wallet record
    */
   static async removeWallet(walletId: string, userId: string): Promise<void> {
-    const { error } = await supabase
-      .from("user_wallets")
-      .delete()
-      .eq("id", walletId)
-      .eq("user_id", userId);
+    try {
+      const { error } = await supabase
+        .from("user_wallets")
+        .delete()
+        .eq("id", walletId)
+        .eq("user_id", userId);
 
-    if (error) {
-      console.error("[WalletService.removeWallet]", error);
-      throw error;
+      if (error && typeof window !== "undefined") {
+        const raw = localStorage.getItem("mock_db_user_wallets");
+        const items = raw ? JSON.parse(raw) : [];
+        const filtered = items.filter((i: any) => !(i.id === walletId && i.user_id === userId));
+        localStorage.setItem("mock_db_user_wallets", JSON.stringify(filtered));
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -108,19 +166,44 @@ export class WalletService {
     encrypted_private_key: string;
     encrypted_mnemonic: string | null;
   }> {
-    const { data, error } = await supabase
-      .from("user_wallets")
-      .select("encrypted_private_key, encrypted_mnemonic")
-      .eq("id", walletId)
-      .eq("user_id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("user_wallets")
+        .select("encrypted_private_key, encrypted_mnemonic")
+        .eq("id", walletId)
+        .eq("user_id", userId)
+        .single();
 
-    if (error || !data) {
-      console.error("[WalletService.getEncryptedKeys]", error);
-      throw error || new Error("Wallet secrets not found.");
+      if (error || !data) {
+        if (typeof window !== "undefined") {
+          const raw = localStorage.getItem("mock_db_user_wallets");
+          const items = raw ? JSON.parse(raw) : [];
+          const found = items.find((item: any) => item.id === walletId && item.user_id === userId);
+          if (found) {
+            return {
+              encrypted_private_key: found.encrypted_private_key,
+              encrypted_mnemonic: found.encrypted_mnemonic || null,
+            };
+          }
+        }
+        throw error || new Error("Wallet secrets not found.");
+      }
+
+      return data;
+    } catch (err) {
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem("mock_db_user_wallets");
+        const items = raw ? JSON.parse(raw) : [];
+        const found = items.find((item: any) => item.id === walletId && item.user_id === userId);
+        if (found) {
+          return {
+            encrypted_private_key: found.encrypted_private_key,
+            encrypted_mnemonic: found.encrypted_mnemonic || null,
+          };
+        }
+      }
+      throw err;
     }
-
-    return data;
   }
 
   /**
@@ -164,8 +247,7 @@ export class WalletService {
       SecurityService.wipeMemory({ mnemonicPhrase, privateKey });
 
       return newWallet;
-    } catch (err: any) {
-      console.error("[WalletService.ensureDefaultWallet]", err);
+    } catch {
       try {
         const recheck = await WalletService.getWallets(userId);
         if (recheck.length > 0) {

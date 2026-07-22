@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, safeStringify } from "@/lib/supabaseClient";
 
 export interface ContactRecord {
   id: string;
@@ -25,13 +25,13 @@ function getLocalContacts(userId: string): ContactRecord[] {
       return JSON.parse(stored);
     } catch (_) {}
   }
-  localStorage.setItem(key, JSON.stringify(DEFAULT_CONTACTS));
+  localStorage.setItem(key, safeStringify(DEFAULT_CONTACTS));
   return DEFAULT_CONTACTS;
 }
 
 function saveLocalContacts(userId: string, contacts: ContactRecord[]) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(`contacts_${userId}`, JSON.stringify(contacts));
+    localStorage.setItem(`contacts_${userId}`, safeStringify(contacts));
   }
 }
 

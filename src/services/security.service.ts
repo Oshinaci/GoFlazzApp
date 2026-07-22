@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, safeStringify } from "@/lib/supabaseClient";
 import {
   hashPin,
   encryptWithHkdf,
@@ -59,13 +59,13 @@ function getLocalWalletSecurity(userId: string): WalletSecurityRecord {
     biometrics_supported: !!window.PublicKeyCredential,
     biometrics_enabled: false,
   };
-  localStorage.setItem(key, JSON.stringify(defaultVal));
+  localStorage.setItem(key, safeStringify(defaultVal));
   return defaultVal;
 }
 
 function setLocalWalletSecurity(userId: string, record: WalletSecurityRecord) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(`wallet_sec_${userId}`, JSON.stringify(record));
+    localStorage.setItem(`wallet_sec_${userId}`, safeStringify(record));
   }
 }
 
@@ -91,13 +91,13 @@ function getLocalSecuritySettings(userId: string): SecuritySettingsRecord {
     passcode_enabled: true,
     auto_lock_minutes: 5,
   };
-  localStorage.setItem(key, JSON.stringify(defaultVal));
+  localStorage.setItem(key, safeStringify(defaultVal));
   return defaultVal;
 }
 
 function setLocalSecuritySettings(userId: string, record: SecuritySettingsRecord) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(`sec_settings_${userId}`, JSON.stringify(record));
+    localStorage.setItem(`sec_settings_${userId}`, safeStringify(record));
   }
 }
 

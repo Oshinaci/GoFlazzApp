@@ -588,7 +588,7 @@ export default function TradePage() {
             </div>
 
             {/* UNIFIED TRADING, ORDER BOOK & ORDERS CONSOLE */}
-            <div className="glass-card p-3.5 space-y-3 border-border shadow-xl">
+            <div className="glass-card p-3.5 space-y-3 border-border shadow-xl relative z-20">
               {/* Navigation Header & Order Book Toggle */}
               <div className="flex items-center justify-between border-b border-border pb-2 gap-2">
                 <div className="flex text-xs font-bold gap-1 overflow-x-auto pb-0.5 custom-scrollbar">
@@ -660,9 +660,9 @@ export default function TradePage() {
               {/* TAB 1: PLACE ORDER (EXECUTION FORM + ADJACENT COLLAPSIBLE ORDER BOOK) */}
               {consoleTab === "trade" && (
                 <div className="space-y-3">
-                  <div className={`grid grid-cols-1 ${showOrderBook ? "md:grid-cols-12" : ""} gap-3.5 items-start`}>
+                  <div className={`grid grid-cols-1 ${showOrderBook ? "md:grid-cols-12" : ""} gap-4 items-stretch`}>
                     {/* LEFT COLUMN: PLACE ORDER EXECUTION FORM */}
-                    <div className={`${showOrderBook ? "md:col-span-7" : "w-full"} space-y-3`}>
+                    <div className={`${showOrderBook ? "md:col-span-7 lg:col-span-7" : "w-full max-w-xl mx-auto"} min-w-0 space-y-3 flex flex-col justify-between`}>
                       {/* Buy / Sell Side Toggle & Limit / Market Order Type */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1 flex rounded-xl bg-surface p-1 border border-border">
@@ -775,7 +775,7 @@ export default function TradePage() {
                           animate={{ opacity: 1, scale: 1, height: "auto" }}
                           exit={{ opacity: 0, scale: 0.96, height: 0 }}
                           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                          className="md:col-span-5 rounded-2xl border border-border/80 bg-surface dark:bg-surface/80 p-3 space-y-2 text-xs font-mono flex flex-col justify-between shadow-xs overflow-hidden"
+                          className="md:col-span-5 lg:col-span-5 w-full min-w-0 rounded-2xl border border-border/80 bg-surface dark:bg-surface/80 p-3 space-y-2 text-xs font-mono flex flex-col justify-between shadow-xs overflow-hidden"
                         >
                           <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
                             <div className="flex items-center gap-1.5 font-bold text-foreground text-xs">

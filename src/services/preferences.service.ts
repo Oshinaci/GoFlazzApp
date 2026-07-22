@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, safeStringify } from "@/lib/supabaseClient";
 
 export interface WalletPreferencesRecord {
   id?: string;
@@ -44,13 +44,13 @@ function getLocalWalletPreferences(userId: string): WalletPreferencesRecord {
     active_wallet_id: null,
     active_network: "ethereum",
   };
-  localStorage.setItem(key, JSON.stringify(defaultVal));
+  localStorage.setItem(key, safeStringify(defaultVal));
   return defaultVal;
 }
 
 function setLocalWalletPreferences(userId: string, record: WalletPreferencesRecord) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(`wallet_prefs_${userId}`, JSON.stringify(record));
+    localStorage.setItem(`wallet_prefs_${userId}`, safeStringify(record));
   }
 }
 
@@ -71,13 +71,13 @@ function getLocalUserPreferences(userId: string): UserPreferencesRecord {
     language: "English",
     theme: "dark",
   };
-  localStorage.setItem(key, JSON.stringify(defaultVal));
+  localStorage.setItem(key, safeStringify(defaultVal));
   return defaultVal;
 }
 
 function setLocalUserPreferences(userId: string, record: UserPreferencesRecord) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(`user_prefs_${userId}`, JSON.stringify(record));
+    localStorage.setItem(`user_prefs_${userId}`, safeStringify(record));
   }
 }
 
@@ -97,13 +97,13 @@ function getLocalNotificationSettings(userId: string): NotificationSettingsRecor
     push_enabled: true,
     email_enabled: true,
   };
-  localStorage.setItem(key, JSON.stringify(defaultVal));
+  localStorage.setItem(key, safeStringify(defaultVal));
   return defaultVal;
 }
 
 function setLocalNotificationSettings(userId: string, record: NotificationSettingsRecord) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(`notif_settings_${userId}`, JSON.stringify(record));
+    localStorage.setItem(`notif_settings_${userId}`, safeStringify(record));
   }
 }
 

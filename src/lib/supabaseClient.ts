@@ -11,24 +11,43 @@ const isPlaceholder =
   rawKey.length < 20 || 
   rawKey.includes("placeholder");
 
-function safeStringify(obj: any): string {
+export function safeStringify(obj: any): string {
   try {
     const seen = new WeakSet();
     return JSON.stringify(obj, (key, value) => {
+      if (typeof value === "function" || typeof value === "symbol") {
+        return undefined;
+      }
+      if (typeof key === "string" && (key.startsWith("__react") || key.startsWith("$$") || key.startsWith("_react"))) {
+        return undefined;
+      }
       if (typeof value === "object" && value !== null) {
         if (seen.has(value)) {
           return undefined;
         }
+        seen.add(value);
+
+        // Filter out DOM nodes, Window, Document, Events, React Fibers, React Elements
         if (
+          (typeof window !== "undefined" && (value === window || value === document)) ||
+          value.window === value ||
+          value.self === value ||
+          value.nodeType !== undefined ||
+          value.ownerDocument !== undefined ||
+          typeof value.tagName === "string" ||
+          typeof value.nodeName === "string" ||
+          value?.stateNode !== undefined ||
+          value?.$$typeof !== undefined ||
           (typeof HTMLElement !== "undefined" && value instanceof HTMLElement) ||
-          value.nodeType ||
-          value?.constructor?.name === "FiberNode" ||
-          value?.stateNode ||
-          value?.$$typeof
+          (typeof Event !== "undefined" && value instanceof Event) ||
+          (typeof Node !== "undefined" && value instanceof Node) ||
+          (value.constructor &&
+            value.constructor.name !== "Object" &&
+            value.constructor.name !== "Array" &&
+            value.constructor.name !== "Date")
         ) {
           return undefined;
         }
-        seen.add(value);
       }
       return value;
     });
@@ -65,11 +84,11 @@ class MockSupabaseClient {
       ];
       tables.forEach((table) => {
         if (!localStorage.getItem(`mock_db_${table}`)) {
-          localStorage.setItem(`mock_db_${table}`, JSON.stringify([]));
+          localStorage.setItem(`mock_db_${table}`, safeStringify([]));
         }
       });
       if (!localStorage.getItem("mock_users")) {
-        localStorage.setItem("mock_users", JSON.stringify([]));
+        localStorage.setItem("mock_users", safeStringify([]));
       }
     }
   }
@@ -129,7 +148,7 @@ class MockSupabaseClient {
         user_metadata: options?.data || {},
       };
       users.push(newUser);
-      localStorage.setItem("mock_users", JSON.stringify(users));
+      localStorage.setItem("mock_users", safeStringify(users));
       localStorage.setItem("mock_current_user_id", newUser.id);
 
       const session = {
@@ -153,7 +172,7 @@ class MockSupabaseClient {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-      localStorage.setItem("mock_db_profiles", JSON.stringify(db_profiles));
+      localStorage.setItem("mock_db_profiles", safeStringify(db_profiles));
 
       this.listeners.forEach((l) => l("SIGNED_IN", session));
 
@@ -205,7 +224,7 @@ class MockSupabaseClient {
       const userIdx = users.findIndex((u: any) => u.id === currentUserId);
       if (userIdx !== -1) {
         users[userIdx].password = password;
-        localStorage.setItem("mock_users", JSON.stringify(users));
+        localStorage.setItem("mock_users", safeStringify(users));
         return { data: { user: { id: currentUserId, email: users[userIdx].email } }, error: null };
       }
       return { data: { user: null }, error: { message: "User not found" } };

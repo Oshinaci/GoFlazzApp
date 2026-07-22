@@ -1,5 +1,7 @@
 import { NotificationsService } from "./notifications.service";
 
+import { safeStringify } from "@/lib/supabaseClient";
+
 export interface WatchlistItem {
   id: string;
   symbol: string;
@@ -127,7 +129,7 @@ export class WatchlistService {
     try {
       const stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
       if (!stored) {
-        localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(INITIAL_WATCHLIST));
+        localStorage.setItem(WATCHLIST_STORAGE_KEY, safeStringify(INITIAL_WATCHLIST));
         return INITIAL_WATCHLIST;
       }
       return JSON.parse(stored);
@@ -139,7 +141,7 @@ export class WatchlistService {
   static saveWatchlist(items: WatchlistItem[]): void {
     if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(WATCHLIST_STORAGE_KEY, safeStringify(items));
     } catch (e) {
       console.warn("Failed to save watchlist", e);
     }

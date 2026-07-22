@@ -1,5 +1,7 @@
 export type NotificationCategory = "transaction" | "security" | "price" | "gas" | "system";
 
+import { safeStringify } from "@/lib/supabaseClient";
+
 export interface WalletNotification {
   id: string;
   category: NotificationCategory;
@@ -58,7 +60,7 @@ export class NotificationsService {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_NOTIFICATIONS));
+        localStorage.setItem(STORAGE_KEY, safeStringify(INITIAL_NOTIFICATIONS));
         return INITIAL_NOTIFICATIONS;
       }
       return JSON.parse(stored);
@@ -70,7 +72,7 @@ export class NotificationsService {
   static saveNotifications(notifications: WalletNotification[]): void {
     if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+      localStorage.setItem(STORAGE_KEY, safeStringify(notifications));
     } catch (e) {
       console.warn("Failed to save notifications", e);
     }

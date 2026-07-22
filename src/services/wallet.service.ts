@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, safeStringify } from "@/lib/supabaseClient";
 import { generateMnemonic, walletFromMnemonic } from "@/lib/wallet";
 import { SecurityService } from "@/services/security.service";
 
@@ -86,7 +86,7 @@ export class WalletService {
           const raw = localStorage.getItem("mock_db_user_wallets");
           const items = raw ? JSON.parse(raw) : [];
           items.push(record);
-          localStorage.setItem("mock_db_user_wallets", JSON.stringify(items));
+          localStorage.setItem("mock_db_user_wallets", safeStringify(items));
         }
         return record;
       }
@@ -106,7 +106,7 @@ export class WalletService {
         const raw = localStorage.getItem("mock_db_user_wallets");
         const items = raw ? JSON.parse(raw) : [];
         items.push(record);
-        localStorage.setItem("mock_db_user_wallets", JSON.stringify(items));
+        localStorage.setItem("mock_db_user_wallets", safeStringify(items));
       }
       return record;
     }
@@ -129,7 +129,7 @@ export class WalletService {
         const idx = items.findIndex((i: any) => i.id === walletId && i.user_id === userId);
         if (idx !== -1) {
           items[idx].name = newName;
-          localStorage.setItem("mock_db_user_wallets", JSON.stringify(items));
+          localStorage.setItem("mock_db_user_wallets", safeStringify(items));
         }
       }
     } catch {
@@ -152,7 +152,7 @@ export class WalletService {
         const raw = localStorage.getItem("mock_db_user_wallets");
         const items = raw ? JSON.parse(raw) : [];
         const filtered = items.filter((i: any) => !(i.id === walletId && i.user_id === userId));
-        localStorage.setItem("mock_db_user_wallets", JSON.stringify(filtered));
+        localStorage.setItem("mock_db_user_wallets", safeStringify(filtered));
       }
     } catch {
       // ignore

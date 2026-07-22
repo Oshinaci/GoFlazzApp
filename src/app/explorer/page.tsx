@@ -53,51 +53,55 @@ export default function ExplorerPage() {
     <main className="min-h-screen bg-background pb-24">
       <ActionPageHeader title="GoFlazz Blockchain Explorer" backHref="/" />
 
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+      <div className="mx-auto mt-4 max-w-5xl space-y-5 px-0 sm:px-8">
         {/* SEARCH BAR */}
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search Tx Hash, Address (0x...), or Block..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-2xl border border-border bg-card py-3 pl-10 pr-20 text-xs text-foreground outline-none focus:border-primary"
-          />
-          <button
-            type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-black"
-          >
-            Search
-          </button>
-        </form>
+        <div className="px-4 sm:px-0">
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search Tx Hash, Address (0x...), or Block..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-2xl border border-border bg-card py-3 pl-10 pr-20 text-xs text-foreground outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-black"
+            >
+              Search
+            </button>
+          </form>
+        </div>
 
         {/* TABS */}
-        <div className="flex rounded-2xl border border-border bg-card p-1 text-xs font-medium">
-          <button
-            onClick={() => setActiveTab("blocks")}
-            className={`flex-1 rounded-xl py-2 transition ${
-              activeTab === "blocks" ? "bg-primary text-black font-bold" : "text-muted-foreground"
-            }`}
-          >
-            Latest Blocks
-          </button>
-          <button
-            onClick={() => setActiveTab("result")}
-            disabled={!searchTxResult && !searchAddressResult && !searchBlockResult}
-            className={`flex-1 rounded-xl py-2 transition ${
-              activeTab === "result" ? "bg-primary text-black font-bold" : "text-muted-foreground opacity-50"
-            }`}
-          >
-            Search Result
-          </button>
+        <div className="px-4 sm:px-0">
+          <div className="flex rounded-2xl border border-border bg-card p-1 text-xs font-medium">
+            <button
+              onClick={() => setActiveTab("blocks")}
+              className={`flex-1 rounded-xl py-2 transition ${
+                activeTab === "blocks" ? "bg-primary text-black font-bold" : "text-muted-foreground"
+              }`}
+            >
+              Latest Blocks
+            </button>
+            <button
+              onClick={() => setActiveTab("result")}
+              disabled={!searchTxResult && !searchAddressResult && !searchBlockResult}
+              className={`flex-1 rounded-xl py-2 transition ${
+                activeTab === "result" ? "bg-primary text-black font-bold" : "text-muted-foreground opacity-50"
+              }`}
+            >
+              Search Result
+            </button>
+          </div>
         </div>
 
         {/* RECENT BLOCKS FEED */}
         {activeTab === "blocks" && (
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground">Ethereum Mainnet Live Blocks</h3>
-            <div className="rounded-3xl border border-border bg-card divide-y divide-border overflow-hidden">
+            <h3 className="px-4 sm:px-0 text-xs font-semibold text-muted-foreground">Ethereum Mainnet Live Blocks</h3>
+            <div className="sm:rounded-3xl rounded-none border-x-0 sm:border-x border-y border-border bg-card divide-y divide-border overflow-hidden">
               {blocks.map((block) => (
                 <div key={block.blockNumber} className="p-3.5 text-xs flex items-center justify-between">
                   <div>
@@ -125,7 +129,7 @@ export default function ExplorerPage() {
           <div className="space-y-4">
             {/* TRANSACTION RESULT */}
             {searchTxResult && (
-              <div className="rounded-3xl border border-border bg-card p-5 space-y-3 text-xs shadow-xl">
+              <div className="sm:rounded-3xl rounded-none border-x-0 sm:border-x border-y border-border bg-card p-5 space-y-3 text-xs shadow-xl">
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <span className="font-bold text-sm text-foreground">Transaction Details</span>
                   <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-emerald-400 font-bold">
@@ -172,7 +176,7 @@ export default function ExplorerPage() {
 
             {/* ADDRESS RESULT */}
             {searchAddressResult && (
-              <div className="rounded-3xl border border-border bg-card p-5 space-y-4 shadow-xl">
+              <div className="sm:rounded-3xl rounded-none border-x-0 sm:border-x border-y border-border bg-card p-5 space-y-4 shadow-xl">
                 <div className="border-b border-border pb-3">
                   <span className="text-xs text-muted-foreground">Address Overview</span>
                   <div className="font-mono font-bold text-xs text-foreground mt-1 break-all">

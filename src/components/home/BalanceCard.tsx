@@ -2,18 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Eye, EyeOff, Copy, Check, TrendingUp } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
-import { SIMULATED_TOTAL_BALANCE_USD, mockBalanceHistory } from "@/data/mock";
+import { Eye, EyeOff, Copy, Check, TrendingUp, Send, Download, RefreshCcw, Plus } from "lucide-react";
+import { SIMULATED_TOTAL_BALANCE_USD } from "@/data/mock";
 import { formatCurrency } from "@/lib/utils";
-import type { BalancePoint } from "@/types";
 import { useWallet } from "@/hooks/useWallet";
 
 export default function BalanceCard() {
   const { activeWallet, activeNetwork } = useWallet();
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
-  const balanceHistory: BalancePoint[] = mockBalanceHistory;
 
   const handleCopy = async () => {
     if (!activeWallet) return;
@@ -27,7 +24,7 @@ export default function BalanceCard() {
   };
 
   return (
-    <div className="glass-card p-6 text-center">
+    <div className="glass-card rounded-[2rem] mx-3 sm:mx-0 p-6 text-center shadow-sm relative overflow-hidden">
       <div className="flex items-center justify-between">
         <span className="rounded-full border border-warning/30 bg-warning/10 px-2.5 py-0.5 text-[10px] font-medium text-warning">
           Simulated
@@ -74,14 +71,33 @@ export default function BalanceCard() {
         </div>
       )}
 
-      <Link href="/analytics" className="block mt-4 h-16 w-full group">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={balanceHistory}>
-            <YAxis hide domain={["dataMin - 100", "dataMax + 100"]} />
-            <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2.5} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </Link>
+      {/* Action Buttons */}
+      <div className="mt-5 grid grid-cols-4 gap-2">
+        <Link href="/send" className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-border/50 bg-background/50 hover:bg-surface py-2 transition">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Send className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-[10px] font-semibold text-foreground">Send</span>
+        </Link>
+        <Link href="/receive" className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-border/50 bg-background/50 hover:bg-surface py-2 transition">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Download className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-[10px] font-semibold text-foreground">Receive</span>
+        </Link>
+        <Link href="/bridge" className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-border/50 bg-background/50 hover:bg-surface py-2 transition">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <RefreshCcw className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-[10px] font-semibold text-foreground">Bridge</span>
+        </Link>
+        <Link href="/add-funds" className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 py-2 transition">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-background">
+            <Plus className="h-4 w-4" />
+          </div>
+          <span className="text-[10px] font-semibold text-primary">Add Funds</span>
+        </Link>
+      </div>
     </div>
   );
 }

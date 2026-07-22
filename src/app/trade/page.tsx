@@ -28,6 +28,18 @@ import {
   SwapQuoteRequest,
   SwapExecutionResult,
 } from "@/services/swap.service";
+import { CryptoLogo } from "@/components/ui/CryptoLogo";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ComposedChart,
+  Bar,
+  Cell
+} from "recharts";
 import { useWallet } from "@/hooks/useWallet";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -159,6 +171,29 @@ interface OrderItem {
   timestamp: string;
 }
 
+const CustomCandle = (props: any) => {
+  const { x, y, width, height, payload } = props;
+  const isUp = payload.close >= payload.open;
+  const fill = isUp ? "#10b981" : "#ef4444";
+  
+  const totalDiff = payload.high - payload.low;
+  const pxPerValue = totalDiff === 0 ? 0 : height / totalDiff;
+  
+  const topBodyDiff = payload.high - Math.max(payload.open, payload.close);
+  const bottomBodyDiff = payload.high - Math.min(payload.open, payload.close);
+  
+  const bodyY = y + topBodyDiff * pxPerValue;
+  const bodyHeight = (bottomBodyDiff - topBodyDiff) * pxPerValue;
+  const halfWidth = width / 2;
+  
+  return (
+    <g stroke={fill} fill={fill}>
+      <line x1={x + halfWidth} y1={y} x2={x + halfWidth} y2={y + height} strokeWidth={1.5} />
+      <rect x={x} y={bodyY} width={width} height={Math.max(bodyHeight, 2)} />
+    </g>
+  );
+};
+
 export default function TradePage() {
   const { activeWallet } = useWallet();
 
@@ -191,6 +226,34 @@ export default function TradePage() {
   // Chart state
   const [timeframe, setTimeframe] = useState<"1H" | "4H" | "24H" | "1W">("24H");
   const [chartType, setChartType] = useState<"line" | "candle">("line");
+
+  const chartDataRecharts = useMemo(() => {
+    let data = selectedPair.chartData;
+    
+    // Simulate zooming by changing length based on timeframe
+    if (timeframe === "1H") data = data.slice(-4);
+    else if (timeframe === "4H") data = data.slice(-8);
+    else if (timeframe === "24H") data = data.slice(-16);
+    // 1W uses full
+    
+    return data.map((price, i, arr) => {
+      const prev = i === 0 ? price : arr[i - 1];
+      const open = prev;
+      const close = price;
+      // Add a slight randomization to wick lengths
+      const high = Math.max(open, close) * (1 + (Math.random() * 0.002));
+      const low = Math.min(open, close) * (1 - (Math.random() * 0.002));
+      return {
+        time: `T${i}`,
+        price,
+        open,
+        close,
+        high,
+        low,
+        range: [low, high]
+      };
+    });
+  }, [selectedPair, timeframe]);
 
   // Order state
   const [orderSide, setOrderSide] = useState<"buy" | "sell">("buy");
@@ -369,9 +432,9 @@ export default function TradePage() {
     <main className="min-h-screen bg-background pb-24 text-foreground relative">
       <ActionPageHeader title="GoFlazz Trade" backHref="/" />
 
-      <div className="container mt-3 max-w-md md:max-w-3xl lg:max-w-4xl space-y-4 px-4 mx-auto">
+      <div className="mx-auto mt-3 max-w-5xl space-y-4 px-0 sm:px-4 md:px-8">
         {/* Trade Mode Switcher */}
-        <div className="flex rounded-2xl border border-border bg-surface p-1 shadow-xs">
+        <div className="mx-4 sm:mx-0 flex rounded-2xl border border-border bg-surface p-1 shadow-xs">
           <button
             onClick={() => setTradeMode("spot")}
             className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
@@ -400,7 +463,7 @@ export default function TradePage() {
         {tradeMode === "spot" && (
           <div className="space-y-4">
             {/* Pair Selector Header Banner */}
-            <div className={`glass-card p-3.5 flex items-center justify-between border-border relative transition-all ${showPairSelector ? "z-[60]" : "z-10"}`}>
+            <div className={`glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x p-3.5 flex items-center justify-between border-border relative transition-all ${showPairSelector ? "z-[60]" : "z-10"}`}>
               {/* Soft Click-outside backdrop with translucent blur */}
               {showPairSelector && (
                 <div
@@ -417,8 +480,8 @@ export default function TradePage() {
                     : "hover:opacity-80"
                 }`}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-xs group-hover:scale-105 transition">
-                  {selectedPair.baseToken}
+                <div className="group-hover:scale-105 transition">
+                  <CryptoLogo symbol={selectedPair.baseToken} size="md" />
                 </div>
                 <div className="text-left">
                   <div className="flex items-center gap-1 font-bold text-sm">
@@ -511,9 +574,7 @@ export default function TradePage() {
                             }`}
                           >
                             <div className="flex items-center gap-2">
-                              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-[10px] font-bold text-primary">
-                                {pair.baseToken}
-                              </span>
+                              <CryptoLogo symbol={pair.baseToken} size="sm" />
                               <div className="text-left">
                                 <div className="font-bold">{pair.symbol}</div>
                                 <div className="text-[10px] text-muted-foreground">Vol {pair.volume24h}</div>
@@ -539,20 +600,42 @@ export default function TradePage() {
             </div>
 
             {/* Price Chart Box */}
-            <div className="glass-card p-4 space-y-3">
+            <div className="glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 bg-surface rounded-xl p-1 border border-border text-[11px]">
-                  {(["1H", "4H", "24H", "1W"] as const).map((tf) => (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-surface rounded-xl p-1 border border-border text-[11px]">
+                    {(["1H", "4H", "24H", "1W"] as const).map((tf) => (
+                      <button
+                        key={tf}
+                        onClick={() => setTimeframe(tf)}
+                        className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                          timeframe === tf ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {tf}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Chart Type Toggle */}
+                  <div className="flex items-center gap-1 bg-surface rounded-xl p-1 border border-border text-[11px]">
                     <button
-                      key={tf}
-                      onClick={() => setTimeframe(tf)}
-                      className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                        timeframe === tf ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
+                      onClick={() => setChartType("line")}
+                      className={`px-2 py-1 rounded-lg font-semibold transition ${
+                        chartType === "line" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      {tf}
+                      Line
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setChartType("candle")}
+                      className={`px-2 py-1 rounded-lg font-semibold transition ${
+                        chartType === "candle" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Candle
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -561,34 +644,65 @@ export default function TradePage() {
                 </div>
               </div>
 
-              {/* SVG Sparkline / Line Chart Representation */}
-              <div className="h-32 w-full relative flex items-end pt-2 pb-1">
-                <svg className="h-full w-full overflow-visible" viewBox="0 0 100 50" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-                  <polygon
-                    points={`0,50 0,25 10,28 20,20 30,15 40,22 50,18 60,12 70,16 80,8 90,14 100,5 100,50`}
-                    fill="url(#chartGradient)"
-                  />
-                  <polyline
-                    fill="none"
-                    stroke="#3B82F6"
-                    strokeWidth="2"
-                    points="0,25 10,28 20,20 30,15 40,22 50,18 60,12 70,16 80,8 90,14 100,5"
-                  />
-                </svg>
-                <div className="absolute top-1 right-0 flex items-center gap-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md animate-pulse">
-                  ${currentPrice.toFixed(2)}
-                </div>
+              {/* Price Chart */}
+              <div className="h-64 w-full relative pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  {chartType === "line" ? (
+                    <LineChart data={chartDataRecharts} margin={{ top: 10, right: 0, left: 10, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="time" hide />
+                      <YAxis
+                        domain={["auto", "auto"]}
+                        orientation="right"
+                        tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(val) => `$${val}`}
+                        width={60}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--surface))", borderColor: "hsl(var(--border))", borderRadius: "12px", fontSize: "12px" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke="#3B82F6"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4, fill: "#3B82F6" }}
+                      />
+                    </LineChart>
+                  ) : (
+                    <ComposedChart data={chartDataRecharts} margin={{ top: 10, right: 0, left: 10, bottom: 0 }}>
+                      <XAxis dataKey="time" hide />
+                      <YAxis
+                        domain={["auto", "auto"]}
+                        orientation="right"
+                        tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(val) => `$${val}`}
+                        width={60}
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: "hsl(var(--surface))", borderColor: "hsl(var(--border))", borderRadius: "12px", fontSize: "12px" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
+                      <Bar dataKey="range" shape={<CustomCandle />} />
+                    </ComposedChart>
+                  )}
+                </ResponsiveContainer>
               </div>
             </div>
 
             {/* UNIFIED TRADING, ORDER BOOK & ORDERS CONSOLE */}
-            <div className="glass-card p-3.5 space-y-3 border-border shadow-xl relative z-20">
+            <div className="glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x p-3.5 space-y-3 border-border shadow-xl relative z-20">
               {/* Navigation Header & Order Book Toggle */}
               <div className="flex items-center justify-between border-b border-border pb-2 gap-2">
                 <div className="flex text-xs font-bold gap-1 overflow-x-auto pb-0.5 custom-scrollbar">
@@ -1001,7 +1115,7 @@ export default function TradePage() {
               <span className="text-muted-foreground">0.0% GoFlazz Fee</span>
             </div>
 
-            <div className="glass-card p-4 space-y-4 border-border shadow-xl">
+            <div className="glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x p-4 space-y-4 border-border shadow-xl">
               <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <span>Pay Amount</span>
                 <span>Slippage: {slippage}%</span>

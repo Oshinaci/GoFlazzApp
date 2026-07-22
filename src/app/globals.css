@@ -6,25 +6,25 @@
 
 @layer base {
   :root {
-    --background: #F8FAFC;
-    --foreground: #0F172A;
-    --surface: #FFFFFF;
-    --surface-glass: rgba(255, 255, 255, 0.9);
-    --border: rgba(15, 23, 42, 0.12);
-    --muted: #F1F5F9;
-    --muted-foreground: #475569;
-    --glass-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+    --background: #fafafa;
+    --foreground: #09090b;
+    --surface: #ffffff;
+    --surface-glass: rgba(255, 255, 255, 0.85);
+    --border: rgba(9, 9, 11, 0.1);
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --glass-shadow: 0 4px 20px -2px rgba(9, 9, 11, 0.05), 0 1px 3px rgba(9, 9, 11, 0.03);
   }
 
   .dark {
-    --background: #05070D;
-    --foreground: #F8FAFC;
-    --surface: #0B0F1A;
-    --surface-glass: rgba(255, 255, 255, 0.04);
-    --border: rgba(255, 255, 255, 0.08);
-    --muted: #151A26;
-    --muted-foreground: #8B93A7;
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --background: #18181b;
+    --foreground: #fafafa;
+    --surface: #27272a;
+    --surface-glass: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.12);
+    --muted: #3f3f46;
+    --muted-foreground: #a1a1aa;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
   html {

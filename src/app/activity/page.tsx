@@ -29,14 +29,14 @@ export default function ActivityPage() {
     activeFilter === "all" ? activity : activity.filter((item: ActivityItem) => item.type === activeFilter);
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8">
-      <div className="container max-w-md">
-        <div className="mb-6 flex items-center justify-between">
+    <main className="min-h-screen bg-background py-8">
+      <div className="mx-auto max-w-5xl px-0 sm:px-4 md:px-8">
+        <div className="mb-6 px-4 sm:px-0 flex items-center justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
           <Logo size="sm" />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="px-4 sm:px-0 flex gap-2 overflow-x-auto pb-1">
           {FILTERS.map((filter: Filter) => (
             <button
               key={filter.id}
@@ -51,7 +51,7 @@ export default function ActivityPage() {
           ))}
         </div>
 
-        <div className="glass-card mt-6 divide-y divide-border">
+        <div className="glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x mt-6 divide-y divide-border">
           {filtered.length === 0 ? (
             <p className="p-6 text-center text-sm text-muted-foreground">No activity in this category yet.</p>
           ) : (

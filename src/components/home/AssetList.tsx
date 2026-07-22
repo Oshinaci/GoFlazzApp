@@ -7,11 +7,11 @@ export default function AssetList() {
 
   return (
     <section>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 px-4 sm:px-0 flex items-center justify-between">
         <h2 className="text-sm font-medium text-muted-foreground">Assets</h2>
         <span className="text-[10px] text-muted-foreground">Simulated data</span>
       </div>
-      <div className="glass-card divide-y divide-border">
+      <div className="glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x divide-y divide-border">
         {assets.map((asset: Asset) => (
           <div key={asset.id} className="flex items-center justify-between px-5 py-3.5">
             <div className="flex items-center gap-3">

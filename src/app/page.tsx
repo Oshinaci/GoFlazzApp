@@ -18,55 +18,70 @@ export default function HomePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-background pb-20">
+    <main className="min-h-screen bg-background pb-20 md:pb-8">
       <TopBar />
-      <div className="container mt-4 max-w-md space-y-6">
-        <BalanceCard />
-        <QuickActions />
-
-        {/* WATCHLIST SNAPSHOT WIDGET */}
-        <section className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <span>Watchlist Highlights</span>
+      <div className="mx-auto mt-4 max-w-5xl space-y-6 md:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Left Column (Main) */}
+          <div className="col-span-1 md:col-span-8 space-y-6">
+            <div className="sm:px-0">
+              <BalanceCard />
             </div>
-            <Link href="/trade" className="flex items-center gap-1 text-xs text-primary hover:underline font-semibold">
-              <span>View Markets</span>
-              <ArrowRight className="h-3 w-3" />
-            </Link>
+            
+            <div className="px-4 sm:px-0">
+              <QuickActions />
+            </div>
+
+            <div className="px-0 sm:px-0">
+              <AssetList />
+            </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {topWatchlist.map((item, idx) => (
-              <Link
-                key={idx}
-                href="/trade"
-                className="rounded-2xl border border-border/60 bg-background/50 p-2.5 transition hover:border-primary/50 text-left"
-              >
-                <div className="text-xs font-bold text-foreground">{item.symbol}</div>
-                <div className="text-[11px] font-semibold text-muted-foreground mt-0.5">{item.price}</div>
-                <div className="text-[10px] font-bold text-emerald-400 mt-1">{item.change}</div>
-              </Link>
-            ))}
-          </div>
-        </section>
+          {/* Right Column (Sidebar) */}
+          <div className="col-span-1 md:col-span-4 space-y-6 px-0 sm:px-0">
+            {/* WATCHLIST SNAPSHOT WIDGET */}
+            <section className="border-y sm:border sm:rounded-3xl border-border bg-card p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span>Watchlist Highlights</span>
+                </div>
+                <Link href="/trade" className="flex items-center gap-1 text-xs text-primary hover:underline font-semibold">
+                  <span>View Markets</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
 
-        <AssetList />
+              <div className="grid grid-cols-3 gap-2">
+                {topWatchlist.map((item, idx) => (
+                  <Link
+                    key={idx}
+                    href="/trade"
+                    className="rounded-2xl border border-border/60 bg-background/50 p-2.5 transition hover:border-primary/50 text-left"
+                  >
+                    <div className="text-xs font-bold text-foreground">{item.symbol}</div>
+                    <div className="text-[11px] font-semibold text-muted-foreground mt-0.5">{item.price}</div>
+                    <div className="text-[10px] font-bold text-emerald-400 mt-1">{item.change}</div>
+                  </Link>
+                ))}
+              </div>
+            </section>
 
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted-foreground">Recent Activity</h2>
-            <Link href="/activity" className="text-xs text-primary hover:underline">
-              View all
-            </Link>
+            <section className="px-0 sm:px-0">
+              <div className="mb-3 px-4 sm:px-0 flex items-center justify-between">
+                <h2 className="text-sm font-medium text-muted-foreground">Recent Activity</h2>
+                <Link href="/activity" className="text-xs text-primary hover:underline">
+                  View all
+                </Link>
+              </div>
+              <div className="glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x divide-y divide-border">
+                {recentActivity.map((item: ActivityItem) => (
+                  <ActivityRow key={item.id} item={item} />
+                ))}
+              </div>
+            </section>
           </div>
-          <div className="glass-card divide-y divide-border">
-            {recentActivity.map((item: ActivityItem) => (
-              <ActivityRow key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
+        </div>
       </div>
     </main>
   );

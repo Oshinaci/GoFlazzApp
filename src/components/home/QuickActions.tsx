@@ -1,18 +1,17 @@
+"use client";
+
 import Link from "next/link";
-import { Send, Download, Wallet, ArrowDownUp, RefreshCcw, Image as ImageIcon, Contact2, Search, Zap, BarChart2 } from "lucide-react";
+import { Download, ArrowDownUp, RefreshCcw, Image as ImageIcon, Contact2, Search, Zap, BarChart2 } from "lucide-react";
 
 interface QuickAction {
   id: string;
   label: string;
   href: string;
-  icon: typeof Send;
+  icon: any;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: "send", label: "Send", href: "/send", icon: Send },
-  { id: "receive", label: "Receive", href: "/receive", icon: Download },
   { id: "trade", label: "Trade", href: "/trade", icon: BarChart2 },
-  { id: "bridge", label: "Bridge", href: "/bridge", icon: RefreshCcw },
   { id: "nfts", label: "NFTs", icon: ImageIcon, href: "/nfts" },
   { id: "address-book", label: "Contacts", href: "/address-book", icon: Contact2 },
   { id: "explorer", label: "Explorer", href: "/explorer", icon: Search },
@@ -21,7 +20,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 
 export default function QuickActions() {
   return (
-    <section className="grid grid-cols-4 gap-2.5">
+    <section className="grid grid-cols-5 gap-2.5">
       {QUICK_ACTIONS.map((action) => (
         <Link
           key={action.id}

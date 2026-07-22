@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowDownLeft, ArrowUpRight, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ActivityItem, ActivityType } from "@/types";

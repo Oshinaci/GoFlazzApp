@@ -39,7 +39,10 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        logo: ["'Noto Sans SC'", "'PingFang SC'", "sans-serif"],
+        logo: ["'ZCOOL QingKe HuangYou'", "'ZCOOL KuaiLe'", "'Ma Shan Zheng'", "'Noto Sans SC'", "sans-serif"],
+        chinese: ["'ZCOOL QingKe HuangYou'", "'ZCOOL KuaiLe'", "'Ma Shan Zheng'", "'Noto Sans SC'", "sans-serif"],
+        chineseCalligraphy: ["'Ma Shan Zheng'", "'Zhi Mang Xing'", "'Noto Sans SC'", "serif"],
+        chineseDisplay: ["'ZCOOL QingKe HuangYou'", "'ZCOOL KuaiLe'", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
       borderRadius: {

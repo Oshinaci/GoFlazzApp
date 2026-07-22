@@ -16,7 +16,16 @@ function safeStringify(obj: any): string {
     const seen = new WeakSet();
     return JSON.stringify(obj, (key, value) => {
       if (typeof value === "object" && value !== null) {
-        if (value instanceof HTMLElement || value?.constructor?.name === "FiberNode" || seen.has(value)) {
+        if (seen.has(value)) {
+          return undefined;
+        }
+        if (
+          (typeof HTMLElement !== "undefined" && value instanceof HTMLElement) ||
+          value.nodeType ||
+          value?.constructor?.name === "FiberNode" ||
+          value?.stateNode ||
+          value?.$$typeof
+        ) {
           return undefined;
         }
         seen.add(value);

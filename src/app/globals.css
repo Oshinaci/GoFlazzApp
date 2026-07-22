@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@500;700;900&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=Zhi+Mang+Xing&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -56,7 +56,7 @@
     @apply bg-blue-gradient bg-clip-text text-transparent;
   }
   .logo-text {
-    @apply font-logo font-black tracking-tight text-gradient;
+    @apply font-chineseDisplay font-black tracking-tight text-gradient;
   }
 }
 

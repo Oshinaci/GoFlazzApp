@@ -47,6 +47,9 @@ create table if not exists public.user_wallets (
   encrypted_private_key text not null,
   is_primary boolean not null default false,
   network text not null default 'arbitrum',
+  chain_type text not null default 'evm',
+  wallet_type text not null default 'hd_mnemonic',
+  derivation_path text default 'm/44''/60''/0''/0/0',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -329,6 +332,7 @@ create trigger wallet_devices_updated_at before update on public.wallet_devices
 -- ========================================================
 create index if not exists idx_user_wallets_user_id on public.user_wallets(user_id);
 create index if not exists idx_user_wallets_address on public.user_wallets(address);
+create index if not exists idx_user_wallets_lower_address on public.user_wallets(lower(address));
 create index if not exists idx_wallet_contacts_user_id on public.wallet_contacts(user_id);
 create index if not exists idx_wallet_balances_wallet_id on public.wallet_balances(wallet_id);
 create index if not exists idx_wallet_activity_user_id on public.wallet_activity(user_id);

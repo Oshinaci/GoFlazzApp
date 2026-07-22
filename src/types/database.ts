@@ -27,6 +27,9 @@ export interface Database {
           encrypted_private_key: string;
           is_primary: boolean;
           network: string;
+          chain_type: string;
+          wallet_type: string;
+          derivation_path: string | null;
           created_at: string;
           updated_at: string;
         };

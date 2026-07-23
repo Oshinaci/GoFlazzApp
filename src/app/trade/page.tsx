@@ -430,7 +430,7 @@ export default function TradePage() {
 
   return (
     <main className="min-h-screen bg-background pb-28 pt-2 text-foreground relative">
-      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
         <ActionPageHeader title="GoFlazz Trade" backHref="/" />
         {/* Trade Mode Switcher */}
         <div className="flex rounded-[16px] border border-border/80 bg-card p-1 shadow-sm">

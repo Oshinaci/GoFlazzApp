@@ -45,10 +45,9 @@ export default function GasTrackerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="Gas Tracker" backHref="/" />
-
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
+        <ActionPageHeader title="Gas Tracker" backHref="/" />
         {/* CHAIN SELECTOR PILLS */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
           {[

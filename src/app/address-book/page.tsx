@@ -122,10 +122,9 @@ export default function AddressBookPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="Favorite Addresses" backHref="/" />
-
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
+        <ActionPageHeader title="Favorite Addresses" backHref="/" />
         {/* TOP BAR ACTIONS */}
         <div className="flex items-center justify-between gap-3">
           <div className="relative flex-1">

@@ -74,10 +74,9 @@ export default function WatchlistPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="Watchlist & Price Charts" backHref="/" />
-
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
+        <ActionPageHeader title="Watchlist & Price Charts" backHref="/" />
         {/* CHART DISPLAY SECTION */}
         {selectedToken && (
           <div className="rounded-3xl border border-border bg-card p-5 shadow-xl">

@@ -38,8 +38,8 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-3 z-50 px-4 pointer-events-none">
-      <div className="mx-auto max-w-[430px] rounded-[24px] border border-border/80 bg-card/90 p-1.5 shadow-2xl backdrop-blur-xl pointer-events-auto">
+    <nav className="fixed inset-x-0 bottom-3 z-50 px-2 sm:px-3 pointer-events-none">
+      <div className="mx-auto max-w-[480px] rounded-[24px] border border-border/80 bg-card/90 p-1.5 shadow-2xl backdrop-blur-xl pointer-events-auto">
         <div className="flex items-center justify-around">
           {NAV_ITEMS.map((item) => {
             const isActive: boolean = pathname === item.href;

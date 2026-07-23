@@ -50,24 +50,24 @@ export default function ExplorerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="GoFlazz Blockchain Explorer" backHref="/" />
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
+        <ActionPageHeader title="GoFlazz Explorer" backHref="/" />
 
-      <div className="mx-auto mt-4 max-w-5xl space-y-5 px-0 sm:px-8">
         {/* SEARCH BAR */}
-        <div className="px-4 sm:px-0">
+        <div>
           <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search Tx Hash, Address (0x...), or Block..."
+              placeholder="Search Tx Hash, Address, or Block..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-2xl border border-border bg-card py-3 pl-10 pr-20 text-xs text-foreground outline-none focus:border-primary"
+              className="w-full rounded-[16px] border border-border/80 bg-card py-2.5 pl-10 pr-20 text-xs text-foreground outline-none focus:border-primary shadow-sm"
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-primary px-3 py-1.5 text-xs font-bold text-black"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-[12px] bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-primary/90"
             >
               Search
             </button>
@@ -75,12 +75,12 @@ export default function ExplorerPage() {
         </div>
 
         {/* TABS */}
-        <div className="px-4 sm:px-0">
-          <div className="flex rounded-2xl border border-border bg-card p-1 text-xs font-medium">
+        <div>
+          <div className="flex rounded-[16px] border border-border/80 bg-card p-1 text-xs font-medium shadow-sm">
             <button
               onClick={() => setActiveTab("blocks")}
-              className={`flex-1 rounded-xl py-2 transition ${
-                activeTab === "blocks" ? "bg-primary text-black font-bold" : "text-muted-foreground"
+              className={`flex-1 rounded-[12px] py-2 transition ${
+                activeTab === "blocks" ? "bg-primary text-white font-bold shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Latest Blocks
@@ -88,8 +88,8 @@ export default function ExplorerPage() {
             <button
               onClick={() => setActiveTab("result")}
               disabled={!searchTxResult && !searchAddressResult && !searchBlockResult}
-              className={`flex-1 rounded-xl py-2 transition ${
-                activeTab === "result" ? "bg-primary text-black font-bold" : "text-muted-foreground opacity-50"
+              className={`flex-1 rounded-[12px] py-2 transition ${
+                activeTab === "result" ? "bg-primary text-white font-bold shadow-sm" : "text-muted-foreground opacity-50"
               }`}
             >
               Search Result
@@ -99,11 +99,11 @@ export default function ExplorerPage() {
 
         {/* RECENT BLOCKS FEED */}
         {activeTab === "blocks" && (
-          <div className="space-y-3">
-            <h3 className="px-4 sm:px-0 text-xs font-semibold text-muted-foreground">Ethereum Mainnet Live Blocks</h3>
-            <div className="sm:rounded-3xl rounded-none border-x-0 sm:border-x border-y border-border bg-card divide-y divide-border overflow-hidden">
+          <div className="space-y-2">
+            <h3 className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Blocks</h3>
+            <div className="rounded-[20px] border border-border/80 bg-card divide-y divide-border/60 overflow-hidden shadow-sm">
               {blocks.map((block) => (
-                <div key={block.blockNumber} className="p-3.5 text-xs flex items-center justify-between">
+                <div key={block.blockNumber} className="p-3.5 text-xs flex items-center justify-between hover:bg-foreground/5 transition">
                   <div>
                     <div className="font-bold text-primary flex items-center gap-1.5">
                       <span>Block #{block.blockNumber}</span>
@@ -129,8 +129,8 @@ export default function ExplorerPage() {
           <div className="space-y-4">
             {/* TRANSACTION RESULT */}
             {searchTxResult && (
-              <div className="sm:rounded-3xl rounded-none border-x-0 sm:border-x border-y border-border bg-card p-5 space-y-3 text-xs shadow-xl">
-                <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="rounded-[20px] border border-border/80 bg-card p-4 space-y-3 text-xs shadow-sm">
+                <div className="flex items-center justify-between border-b border-border/60 pb-3">
                   <span className="font-bold text-sm text-foreground">Transaction Details</span>
                   <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-emerald-400 font-bold">
                     {searchTxResult.status}
@@ -140,7 +140,7 @@ export default function ExplorerPage() {
                 <div className="space-y-2">
                   <div>
                     <span className="text-muted-foreground">Tx Hash</span>
-                    <div className="flex items-center justify-between font-mono font-medium text-foreground text-[11px] break-all bg-background/50 p-2 rounded-xl mt-1">
+                    <div className="flex items-center justify-between font-mono font-medium text-foreground text-[11px] break-all bg-card-secondary p-2 rounded-xl mt-1 border border-border/60">
                       <span>{searchTxResult.txHash}</span>
                       <Copy
                         className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
@@ -176,8 +176,8 @@ export default function ExplorerPage() {
 
             {/* ADDRESS RESULT */}
             {searchAddressResult && (
-              <div className="sm:rounded-3xl rounded-none border-x-0 sm:border-x border-y border-border bg-card p-5 space-y-4 shadow-xl">
-                <div className="border-b border-border pb-3">
+              <div className="rounded-[20px] border border-border/80 bg-card p-4 space-y-4 shadow-sm">
+                <div className="border-b border-border/60 pb-3">
                   <span className="text-xs text-muted-foreground">Address Overview</span>
                   <div className="font-mono font-bold text-xs text-foreground mt-1 break-all">
                     {searchAddressResult.address}
@@ -185,11 +185,11 @@ export default function ExplorerPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-border bg-background/50 p-3">
+                  <div className="rounded-[14px] border border-border/80 bg-card-secondary p-3">
                     <span className="text-[10px] text-muted-foreground">ETH Balance</span>
                     <div className="font-bold text-sm text-foreground">{searchAddressResult.balanceEth} ETH</div>
                   </div>
-                  <div className="rounded-2xl border border-border bg-background/50 p-3">
+                  <div className="rounded-[14px] border border-border/80 bg-card-secondary p-3">
                     <span className="text-[10px] text-muted-foreground">USD Value</span>
                     <div className="font-bold text-sm text-primary">${searchAddressResult.balanceUsd.toLocaleString()}</div>
                   </div>
@@ -199,7 +199,7 @@ export default function ExplorerPage() {
                   <h4 className="text-xs font-semibold text-muted-foreground mb-2">Token Balances</h4>
                   <div className="space-y-1.5">
                     {searchAddressResult.tokens.map((t, idx) => (
-                      <div key={idx} className="flex justify-between text-xs p-2 rounded-xl bg-background/40">
+                      <div key={idx} className="flex justify-between text-xs p-2.5 rounded-[12px] bg-card-secondary border border-border/60">
                         <span className="font-bold text-foreground">{t.symbol}</span>
                         <span>{t.balance} (${t.valueUsd.toLocaleString()})</span>
                       </div>

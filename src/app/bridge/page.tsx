@@ -85,7 +85,7 @@ export default function BridgePage() {
 
   return (
     <main className="min-h-screen bg-background pb-28 pt-2">
-      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
         <ActionPageHeader title="Cross-Chain Bridge" backHref="/" />
         <div className="rounded-3xl border border-border bg-card p-5 shadow-xl space-y-4">
           {/* CHAIN SELECTION ROW */}

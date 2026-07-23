@@ -36,7 +36,7 @@ export default function TopBar() {
 
   return (
     <div className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <header className="mx-auto max-w-5xl flex h-16 items-center justify-between px-4 sm:px-8">
+      <header className="mx-auto max-w-[480px] md:max-w-5xl flex h-16 items-center justify-between px-2.5 sm:px-4 md:px-8">
         <Logo size="sm" />
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Desktop Nav */}

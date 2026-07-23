@@ -140,7 +140,7 @@ export default function AddFundsPage() {
   if (!activeWallet) {
     return (
       <main className="min-h-screen bg-background pb-28 pt-2">
-        <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
           <ActionPageHeader title="Add Funds" backHref="/" />
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Wallet className="h-12 w-12 text-muted-foreground/50 mb-3" />
@@ -153,7 +153,7 @@ export default function AddFundsPage() {
 
   return (
     <main className="min-h-screen bg-background pb-28 pt-2">
-      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
         <ActionPageHeader title="Add Funds" backHref="/" />
 
       {!selectedMethod ? (

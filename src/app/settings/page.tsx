@@ -369,8 +369,8 @@ export default function SettingsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background pb-28 pt-4 text-foreground relative">
-      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+    <main className="min-h-screen bg-background pb-28 pt-2 text-foreground relative">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
         {/* VIEW 1: MAIN MENU */}
         {view === "menu" && (
           <div className="space-y-4">

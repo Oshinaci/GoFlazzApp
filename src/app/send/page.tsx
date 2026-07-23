@@ -31,7 +31,7 @@ export default function SendPage() {
 
   return (
     <main className="min-h-screen bg-background pb-28 pt-4">
-      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+      <div className="mx-auto max-w-[480px] px-2.5 sm:px-3.5 space-y-4">
         <ActionPageHeader title="Send Assets" backHref="/" />
 
         <div className="rounded-[20px] bg-card border border-border/80 p-4 shadow-sm space-y-4">

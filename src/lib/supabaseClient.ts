@@ -80,7 +80,14 @@ class MockSupabaseClient {
         "wallet_metadata",
         "wallet_contacts",
         "wallet_balances",
-        "wallet_devices"
+        "wallet_devices",
+        "security_center_status",
+        "recovery_methods",
+        "social_guardians",
+        "recovery_requests",
+        "user_sessions",
+        "wallet_backups",
+        "mpc_key_shares"
       ];
       tables.forEach((table) => {
         if (!localStorage.getItem(`mock_db_${table}`)) {

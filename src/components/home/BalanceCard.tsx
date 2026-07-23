@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Eye, EyeOff, Copy, Check, TrendingUp, Send, Download, RefreshCcw, Plus } from "lucide-react";
-import { SIMULATED_TOTAL_BALANCE_USD } from "@/data/mock";
+import { Eye, EyeOff, Copy, Check, TrendingUp, Send, Download, RefreshCcw, Plus, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { useWallet } from "@/hooks/useWallet";
+import { WalletAccount } from "@/hooks/useWallet";
 
-export default function BalanceCard() {
-  const { activeWallet, activeNetwork } = useWallet();
+interface BalanceCardProps {
+  activeWallet: WalletAccount | null;
+  activeNetwork: string;
+  totalPortfolioValue: number;
+  dailyPnLPercentage: number;
+  loading: boolean;
+}
+
+export default function BalanceCard({ activeWallet, activeNetwork, totalPortfolioValue, dailyPnLPercentage, loading }: BalanceCardProps) {
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -26,8 +32,8 @@ export default function BalanceCard() {
   return (
     <div className="rounded-[20px] bg-card border border-border/80 p-5 text-center shadow-sm relative overflow-hidden space-y-3">
       <div className="flex items-center justify-between">
-        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-500">
-          Simulated
+        <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
+          Live Portfolio
         </span>
         <p className="text-[13px] text-muted-foreground font-medium">Total Net Balance</p>
         <Link href="/analytics" className="text-[12px] text-primary font-semibold hover:underline flex items-center gap-1">
@@ -37,8 +43,10 @@ export default function BalanceCard() {
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <p className="text-[32px] font-extrabold tracking-tight text-foreground">
-          {isVisible ? formatCurrency(SIMULATED_TOTAL_BALANCE_USD) : "••••••"}
+        <p className="text-[32px] font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          {loading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : (
+            isVisible ? formatCurrency(totalPortfolioValue) : "••••••"
+          )}
         </p>
         <button
           aria-label={isVisible ? "Hide balance" : "Show balance"}
@@ -48,7 +56,12 @@ export default function BalanceCard() {
           {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </button>
       </div>
-      <p className="text-[13px] font-semibold text-emerald-500">+4.96% this week</p>
+      
+      {!loading && (
+        <p className={`text-[13px] font-semibold ${dailyPnLPercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+          {dailyPnLPercentage >= 0 ? "+" : ""}{dailyPnLPercentage.toFixed(2)}% today
+        </p>
+      )}
 
       {activeWallet && (
         <div className="flex items-center justify-between rounded-[14px] border border-border/80 bg-card-secondary px-3.5 py-2 text-[12px]">

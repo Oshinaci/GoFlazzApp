@@ -34,4 +34,5 @@ export * from "./wallet-engine";
 export * from "./asset-engine";
 export * from "./transaction";
 export * from "./database";
+export * from "./security-engine";
 

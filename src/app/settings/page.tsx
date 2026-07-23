@@ -41,6 +41,7 @@ import { PreferencesService } from "@/services/preferences.service";
 import { SecurityService } from "@/services/security.service";
 import { generateMnemonicPDF } from "@/lib/pdfBackup";
 import { toast } from "sonner";
+import ActionPageHeader from "@/components/layout/ActionPageHeader";
 
 type ViewMode = "menu" | "wallet-accounts" | "address-book" | "security-center";
 
@@ -368,48 +369,40 @@ export default function SettingsPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 text-foreground relative">
-      <div className="container max-w-md pb-24">
+    <main className="min-h-screen bg-background pb-28 pt-4 text-foreground relative">
+      <div className="mx-auto max-w-[430px] px-4 space-y-4">
         {/* VIEW 1: MAIN MENU */}
         {view === "menu" && (
-          <div>
-            <div className="mb-6 flex items-center gap-3">
-              <button
-                onClick={() => window.location.href = "/"}
-                className="rounded-full p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <h1 className="text-xl font-semibold">Settings</h1>
-            </div>
+          <div className="space-y-4">
+            <ActionPageHeader title="Settings" backHref="/" />
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Profile card */}
-              <section className="glass-card p-4 flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-gradient">
-                  <User className="h-6 w-6 text-foreground" />
+              <section className="rounded-[20px] bg-card border border-border/80 p-4 shadow-sm flex items-center gap-3.5">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-primary/10 text-primary border border-primary/20 shrink-0">
+                  <User className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{profile?.display_name || "GoFlazz User"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user?.email || "Offline Sandbox"}</p>
+                  <p className="font-semibold text-[15px] truncate text-foreground">{profile?.display_name || "GoFlazz User"}</p>
+                  <p className="text-[13px] text-muted-foreground truncate font-medium">{user?.email || "Offline Sandbox"}</p>
                 </div>
               </section>
 
               {/* Preferences category */}
-              <section>
-                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <section className="space-y-2">
+                <h2 className="px-1 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Preferences
                 </h2>
-                <div className="glass-card divide-y divide-border px-4">
+                <div className="rounded-[20px] bg-card border border-border/80 divide-y divide-border/60 px-4 shadow-sm">
                   {/* Default currency */}
-                  <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center justify-between py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
+                      <div className="rounded-[12px] border border-border bg-card-secondary p-2 text-muted-foreground">
                         <Coins className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Default Currency</p>
-                        <p className="text-xs text-muted-foreground">Display assets in currency</p>
+                        <p className="text-[14px] font-semibold text-foreground">Default Currency</p>
+                        <p className="text-[12px] text-muted-foreground font-medium">Display assets in currency</p>
                       </div>
                     </div>
                     <div className="relative">
@@ -422,7 +415,7 @@ export default function SettingsPage() {
                           updatePreference("currency", val);
                           toast.success(`Currency changed to ${val}`);
                         }}
-                        className="appearance-none rounded-xl border border-border bg-surface py-1.5 pl-3 pr-8 text-xs outline-none focus:border-primary"
+                        className="appearance-none rounded-[14px] border border-border/80 bg-card-secondary py-1.5 pl-3 pr-8 text-[12px] font-semibold text-foreground outline-none focus:border-primary"
                       >
                         <option value="USD">USD ($)</option>
                         <option value="IDR">IDR (Rp)</option>
@@ -434,14 +427,14 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Language */}
-                  <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center justify-between py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
+                      <div className="rounded-[12px] border border-border bg-card-secondary p-2 text-muted-foreground">
                         <Languages className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Language</p>
-                        <p className="text-xs text-muted-foreground">App display language</p>
+                        <p className="text-[14px] font-semibold text-foreground">Language</p>
+                        <p className="text-[12px] text-muted-foreground font-medium">App display language</p>
                       </div>
                     </div>
                     <div className="relative">
@@ -455,7 +448,7 @@ export default function SettingsPage() {
                           updatePreference("language", code);
                           toast.success(`Language updated to ${val}`);
                         }}
-                        className="appearance-none rounded-xl border border-border bg-surface py-1.5 pl-3 pr-8 text-xs outline-none focus:border-primary"
+                        className="appearance-none rounded-[14px] border border-border/80 bg-card-secondary py-1.5 pl-3 pr-8 text-[12px] font-semibold text-foreground outline-none focus:border-primary"
                       >
                         <option value="English">English</option>
                         <option value="Indonesian">Indonesian</option>
@@ -466,14 +459,14 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Theme */}
-                  <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center justify-between py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
+                      <div className="rounded-[12px] border border-border bg-card-secondary p-2 text-muted-foreground">
                         {theme === "light" ? <Sun className="h-4 w-4" /> : theme === "system" ? <Monitor className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Appearance</p>
-                        <p className="text-xs text-muted-foreground">Choose visual layout</p>
+                        <p className="text-[14px] font-semibold text-foreground">Appearance</p>
+                        <p className="text-[12px] text-muted-foreground font-medium">Choose visual layout</p>
                       </div>
                     </div>
                     <div className="relative">
@@ -486,7 +479,7 @@ export default function SettingsPage() {
                           updatePreference("theme", val);
                           toast.success(`Appearance changed to ${val} theme`);
                         }}
-                        className="appearance-none rounded-xl border border-border bg-surface py-1.5 pl-3 pr-8 text-xs outline-none focus:border-primary"
+                        className="appearance-none rounded-[14px] border border-border/80 bg-card-secondary py-1.5 pl-3 pr-8 text-[12px] font-semibold text-foreground outline-none focus:border-primary"
                       >
                         <option value="dark">Dark Theme</option>
                         <option value="light">Light Theme</option>
@@ -499,15 +492,15 @@ export default function SettingsPage() {
                   {/* Address Book */}
                   <div
                     onClick={() => setView("address-book")}
-                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-foreground/5 transition px-2 -mx-2 rounded-xl"
+                    className="flex items-center justify-between py-3.5 cursor-pointer hover:bg-foreground/5 transition rounded-xl"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
+                      <div className="rounded-[12px] border border-border bg-card-secondary p-2 text-muted-foreground">
                         <User className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Address Book</p>
-                        <p className="text-xs text-muted-foreground">Manage your saved contacts</p>
+                        <p className="text-[14px] font-semibold text-foreground">Address Book</p>
+                        <p className="text-[12px] text-muted-foreground font-medium">Manage your saved contacts</p>
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -516,15 +509,15 @@ export default function SettingsPage() {
               </section>
 
               {/* Wallet Category */}
-              <section>
-                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <section className="space-y-2">
+                <h2 className="px-1 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Security & Wallet
                 </h2>
-                <div className="glass-card divide-y divide-border px-4">
+                <div className="rounded-[20px] bg-card border border-border/80 divide-y divide-border/60 px-4 shadow-sm">
                   <ToggleSetting
                     icon={Shield}
                     label={`${biometricTypeLabel} Authentication`}
-                    description={`Use ${biometricTypeLabel} for fast & secure unlock`}
+                    description={`Use ${biometricTypeLabel} for fast unlock`}
                     checked={isBiometricsEnabled}
                     disabled={isLoading}
                     onChange={async (checked) => {
@@ -552,15 +545,15 @@ export default function SettingsPage() {
                   {/* Wallet Management Link */}
                   <div
                     onClick={() => setView("wallet-accounts")}
-                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-foreground/5 transition px-2 -mx-2 rounded-xl"
+                    className="flex items-center justify-between py-3.5 cursor-pointer hover:bg-foreground/5 transition rounded-xl"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg border border-border bg-surface p-2 text-muted-foreground">
+                      <div className="rounded-[12px] border border-border bg-card-secondary p-2 text-muted-foreground">
                         <Wallet className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Wallet Management</p>
-                        <p className="text-xs text-muted-foreground">Manage keys, networks, and backups</p>
+                        <p className="text-[14px] font-semibold text-foreground">Wallet Management</p>
+                        <p className="text-[12px] text-muted-foreground font-medium">Manage keys, networks, and backups</p>
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -569,16 +562,16 @@ export default function SettingsPage() {
                   {/* Security Center Link */}
                   <div
                     onClick={() => setView("security-center")}
-                    className="flex items-center justify-between py-3 cursor-pointer hover:bg-foreground/5 transition px-2 -mx-2 rounded-xl"
+                    className="flex items-center justify-between py-3.5 cursor-pointer hover:bg-foreground/5 transition rounded-xl"
                     id="security-center-link"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg border border-border bg-surface p-2 text-primary">
+                      <div className="rounded-[12px] border border-primary/20 bg-primary/10 p-2 text-primary">
                         <Shield className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-primary">Security Center</p>
-                        <p className="text-xs text-muted-foreground">Check score, devices, guardians & MPC backup health</p>
+                        <p className="text-[14px] font-semibold text-primary">Security Center</p>
+                        <p className="text-[12px] text-muted-foreground font-medium">Check score, devices & MPC backup health</p>
                       </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-primary" />
@@ -587,11 +580,11 @@ export default function SettingsPage() {
               </section>
 
               {/* Notifications */}
-              <section>
-                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <section className="space-y-2">
+                <h2 className="px-1 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Notifications
                 </h2>
-                <div className="glass-card divide-y divide-border px-4">
+                <div className="rounded-[20px] bg-card border border-border/80 divide-y divide-border/60 px-4 shadow-sm">
                   <ToggleSetting
                     icon={Bell}
                     label="Push Notifications"
@@ -621,11 +614,11 @@ export default function SettingsPage() {
 
               {/* Sign Out */}
               <section>
-                <div className="glass-card p-2">
+                <div className="rounded-[20px] bg-card border border-border/80 p-2 shadow-sm">
                   <button
                     onClick={handleSignOut}
                     disabled={isLoggingOut}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 py-3 text-sm font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-[14px] border border-destructive/20 bg-destructive/5 py-3 text-[14px] font-semibold text-destructive transition hover:bg-destructive/10 disabled:opacity-50"
                   >
                     {isLoggingOut ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-destructive/20 border-t-destructive" />
@@ -644,35 +637,30 @@ export default function SettingsPage() {
 
         {/* VIEW 2: WALLET MANAGEMENT */}
         {view === "wallet-accounts" && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setView("menu");
-                  setDecryptedKey(null);
-                  setDecryptedPhrase(null);
-                }}
-                className="rounded-full p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <h1 className="text-xl font-semibold">Wallets</h1>
-            </div>
+          <div className="space-y-4">
+            <ActionPageHeader
+              title="Wallets"
+              onBack={() => {
+                setView("menu");
+                setDecryptedKey(null);
+                setDecryptedPhrase(null);
+              }}
+            />
 
             {/* Network Selector */}
             <section className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
                 Active Chain network
               </h3>
-              <div className="grid grid-cols-3 gap-2 font-medium">
+              <div className="grid grid-cols-3 gap-2">
                 {SUPPORTED_NETWORKS.map((net) => (
                   <button
                     key={net.id}
                     onClick={() => selectNetwork(net.id)}
-                    className={`flex items-center gap-1.5 p-2.5 rounded-xl border text-xs transition ${
+                    className={`flex items-center justify-center gap-1.5 p-2.5 rounded-[14px] border text-[12px] font-semibold transition-all ${
                       activeNetwork === net.id
-                        ? "border-primary bg-primary/10 text-white"
-                        : "border-border bg-surface text-muted-foreground hover:text-foreground"
+                        ? "border-primary bg-primary text-white shadow-sm"
+                        : "border-border/80 bg-card text-muted-foreground hover:text-foreground hover:border-border"
                     }`}
                   >
                     <span>{net.icon}</span>
@@ -683,17 +671,17 @@ export default function SettingsPage() {
             </section>
 
             {/* Wallet List */}
-            <section className="space-y-3">
+            <section className="space-y-2.5">
               <div className="flex justify-between items-center px-1">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Your Accounts
                 </h3>
-                <span className="text-[10px] text-muted-foreground font-semibold">
-                  {wallets.length} {wallets.length === 1 ? "wallet account" : "wallet accounts"}
+                <span className="text-[11px] text-muted-foreground font-medium">
+                  {wallets.length} {wallets.length === 1 ? "account" : "accounts"}
                 </span>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {wallets.map((w) => {
                   const isActive = activeWallet?.id === w.id;
                   const isPrimary = w.is_primary;
@@ -701,8 +689,8 @@ export default function SettingsPage() {
                     <div
                       key={w.id}
                       onClick={() => selectWallet(w.id)}
-                      className={`glass-card p-4 space-y-3 border transition cursor-pointer relative ${
-                        isActive ? "border-primary bg-primary/[0.02]" : "border-border hover:border-border/80"
+                      className={`p-4 rounded-[20px] bg-card border space-y-3 transition-all cursor-pointer relative shadow-sm ${
+                        isActive ? "border-primary ring-1 ring-primary/30" : "border-border/80 hover:border-primary/30"
                       }`}
                     >
                       <div className="flex items-start justify-between">

@@ -295,6 +295,7 @@ export default function MarketEnginePage() {
                         <Star className={`w-4 h-4 ${isFav ? "fill-amber-400 text-amber-400" : ""}`} />
                       </button>
 
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={logo}
                         alt={token.symbol}
@@ -376,6 +377,7 @@ export default function MarketEnginePage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-xs text-muted-foreground w-5 text-center">#{idx + 1}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={TokenLogoEngine.getTokenLogoUrl(token.symbol, token.logoUrl)}
                       alt={token.symbol}
@@ -548,6 +550,7 @@ export default function MarketEnginePage() {
               {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-border">
                 <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={TokenLogoEngine.getTokenLogoUrl(selectedToken.symbol, selectedToken.logoUrl)}
                     alt={selectedToken.symbol}

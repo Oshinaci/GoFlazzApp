@@ -20,14 +20,14 @@ const QUICK_ACTIONS: QuickAction[] = [
 
 export default function QuickActions() {
   return (
-    <section className="grid grid-cols-5 gap-2.5">
+    <section className="grid grid-cols-5 gap-2">
       {QUICK_ACTIONS.map((action) => (
         <Link
           key={action.id}
           href={action.href}
-          className="glass-card flex flex-col items-center justify-center gap-1.5 py-3 transition hover:bg-foreground/5 hover:border-primary/50 text-center"
+          className="rounded-[16px] bg-card border border-border/80 shadow-sm flex flex-col items-center justify-center gap-1.5 py-3 transition hover:border-primary/40 hover:bg-card-secondary text-center group"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-primary/10 text-primary group-hover:scale-105 transition-transform">
             <action.icon className="h-4 w-4" />
           </span>
           <span className="text-[11px] font-semibold text-foreground truncate w-full px-1">{action.label}</span>

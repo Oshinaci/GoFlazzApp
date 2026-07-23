@@ -3,14 +3,10 @@ import TopBar from "@/components/layout/TopBar";
 import BalanceCard from "@/components/home/BalanceCard";
 import QuickActions from "@/components/home/QuickActions";
 import AssetList from "@/components/home/AssetList";
-import ActivityRow from "@/components/activity/ActivityRow";
-import { mockActivity } from "@/data/mock";
-import type { ActivityItem } from "@/types";
+import HomeMarketWidget from "@/components/home/HomeMarketWidget";
 import { TrendingUp, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
-  const recentActivity: ActivityItem[] = mockActivity.slice(0, 3);
-
   const topWatchlist = [
     { symbol: "BTC", price: "$64,200", change: "+3.45%", isUp: true },
     { symbol: "ETH", price: "$3,350", change: "+2.18%", isUp: true },
@@ -20,7 +16,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background pb-28 pt-2">
       <TopBar />
-      <div className="mx-auto max-w-[430px] px-4 space-y-4 mt-3">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4 mt-3">
         {/* Main Balance Hero */}
         <BalanceCard />
 
@@ -29,6 +25,9 @@ export default function HomePage() {
 
         {/* Assets List */}
         <AssetList />
+
+        {/* Live Market Feature Widget */}
+        <HomeMarketWidget />
 
         {/* Watchlist Highlights */}
         <section className="space-y-2">
@@ -54,21 +53,6 @@ export default function HomePage() {
                 <div className="text-[12px] font-semibold text-muted-foreground">{item.price}</div>
                 <div className="text-[11px] font-bold text-emerald-500">{item.change}</div>
               </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Recent Activity Section */}
-        <section className="space-y-2">
-          <div className="px-1 flex items-center justify-between">
-            <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">Recent Activity</h2>
-            <Link href="/activity" className="text-[12px] text-primary font-semibold hover:underline">
-              View all
-            </Link>
-          </div>
-          <div className="space-y-2.5">
-            {recentActivity.map((item: ActivityItem) => (
-              <ActivityRow key={item.id} item={item} />
             ))}
           </div>
         </section>

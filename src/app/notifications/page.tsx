@@ -80,10 +80,9 @@ export default function NotificationsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="Notification Center" backHref="/" />
-
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="Notification Center" backHref="/" />
         {/* PUSH PERMISSION BANNER */}
         {!hasPushPermission && (
           <div className="rounded-3xl border border-primary/30 bg-primary/10 p-4 text-xs space-y-2">

@@ -139,19 +139,22 @@ export default function AddFundsPage() {
 
   if (!activeWallet) {
     return (
-      <main className="min-h-screen bg-background pb-20 pt-4 px-4 sm:px-8 max-w-lg mx-auto">
-        <ActionPageHeader title="Add Funds" backHref="/" />
-        <div className="flex flex-col items-center justify-center h-64 text-center">
-          <Wallet className="h-12 w-12 text-muted-foreground/50 mb-3" />
-          <p className="text-muted-foreground">No active wallet found.</p>
+      <main className="min-h-screen bg-background pb-28 pt-2">
+        <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+          <ActionPageHeader title="Add Funds" backHref="/" />
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <Wallet className="h-12 w-12 text-muted-foreground/50 mb-3" />
+            <p className="text-muted-foreground">No active wallet found.</p>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background pb-20 pt-4 px-4 sm:px-8 max-w-lg mx-auto">
-      <ActionPageHeader title="Add Funds" backHref="/" />
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="Add Funds" backHref="/" />
 
       {!selectedMethod ? (
         <div className="space-y-6">
@@ -541,6 +544,7 @@ export default function AddFundsPage() {
           )}
         </div>
       )}
+      </div>
     </main>
   );
 }

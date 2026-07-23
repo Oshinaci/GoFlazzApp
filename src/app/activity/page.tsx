@@ -49,7 +49,7 @@ export default function ActivityPage() {
 
   return (
     <main className="min-h-screen bg-background pb-28 pt-4">
-      <div className="mx-auto max-w-[430px] px-4 space-y-4">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
         {/* Page Header */}
         <ActionPageHeader title="Activity" backHref="/" />
 

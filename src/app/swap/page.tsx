@@ -128,10 +128,9 @@ export default function SwapPage() {
     : "";
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="Token Swap & DEX Aggregator" backHref="/" />
-
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="Token Swap & DEX Aggregator" backHref="/" />
         {/* Header Title Banner */}
         <div className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary/5 p-3.5 text-xs">
           <div className="flex items-center gap-2 text-primary">

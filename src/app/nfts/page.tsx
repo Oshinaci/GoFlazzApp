@@ -56,10 +56,9 @@ export default function NftGalleryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24">
-      <ActionPageHeader title="NFT Gallery" backHref="/" />
-
-      <div className="container mt-4 max-w-md space-y-5 px-4">
+    <main className="min-h-screen bg-background pb-28 pt-2">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="NFT Gallery" backHref="/" />
         {/* Header Stats Bar */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-border bg-card p-3.5 shadow-sm">

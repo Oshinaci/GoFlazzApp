@@ -1,48 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { ScanLine } from "lucide-react";
+import { ScanLine, AlertCircle } from "lucide-react";
 import ActionPageHeader from "@/components/layout/ActionPageHeader";
 
 export default function PayPage() {
   const [amount, setAmount] = useState<string>("");
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8">
-      <div className="container max-w-md">
-        <ActionPageHeader title="Pay" />
+    <main className="min-h-screen bg-background pb-28 pt-4">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="Scan & Pay" backHref="/" />
 
-        <div className="glass-card space-y-5 p-6">
-          <p className="rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs text-warning">
-            Phase 1 preview — merchant payments are UI only for now.
-          </p>
+        <div className="rounded-[20px] bg-card border border-border/80 p-4 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 rounded-[14px] border border-amber-500/20 bg-amber-500/10 p-3 text-[12px] font-medium text-amber-500">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>Merchant QR payments feature simulation.</span>
+          </div>
 
           <button
             type="button"
-            disabled
-            className="flex w-full cursor-not-allowed flex-col items-center gap-3 rounded-xl border border-dashed border-border py-10 opacity-60"
+            className="flex w-full flex-col items-center gap-3 rounded-[18px] border border-dashed border-primary/40 bg-card-secondary py-10 transition hover:border-primary hover:bg-primary/5 cursor-pointer group"
           >
-            <ScanLine className="h-8 w-8 text-primary" />
-            <span className="text-sm">Scan merchant QR</span>
+            <div className="p-3 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+              <ScanLine className="h-8 w-8" />
+            </div>
+            <span className="text-[14px] font-semibold text-foreground">Tap to Scan Merchant QR Code</span>
           </button>
 
           <div className="space-y-1.5">
-            <label className="text-sm text-muted-foreground">Or enter amount</label>
+            <label className="text-[13px] font-semibold text-muted-foreground">Or Enter Payment Amount</label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-primary"
+              className="w-full rounded-[14px] border border-border/80 bg-card-secondary px-3.5 py-2.5 text-[14px] font-bold text-foreground outline-none focus:border-primary placeholder:text-muted-foreground/60"
             />
           </div>
 
           <button
             type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-xl bg-blue-gradient px-4 py-2.5 text-sm font-medium opacity-40"
+            disabled={!amount || parseFloat(amount) <= 0}
+            className="w-full rounded-[14px] bg-primary py-3 text-[14px] font-bold text-white shadow-sm hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Available in Phase 2
+            Pay Merchant
           </button>
         </div>
       </div>

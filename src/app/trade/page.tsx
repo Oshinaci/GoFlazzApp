@@ -429,15 +429,14 @@ export default function TradePage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24 text-foreground relative">
-      <ActionPageHeader title="GoFlazz Trade" backHref="/" />
-
-      <div className="mx-auto mt-3 max-w-5xl space-y-4 px-0 sm:px-4 md:px-8">
+    <main className="min-h-screen bg-background pb-28 pt-2 text-foreground relative">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="GoFlazz Trade" backHref="/" />
         {/* Trade Mode Switcher */}
-        <div className="mx-4 sm:mx-0 flex rounded-2xl border border-border bg-surface p-1 shadow-xs">
+        <div className="flex rounded-[16px] border border-border/80 bg-card p-1 shadow-sm">
           <button
             onClick={() => setTradeMode("spot")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-[12px] py-2 text-xs font-semibold transition ${
               tradeMode === "spot"
                 ? "bg-primary text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -448,7 +447,7 @@ export default function TradePage() {
           </button>
           <button
             onClick={() => setTradeMode("swap")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-[12px] py-2 text-xs font-semibold transition ${
               tradeMode === "swap"
                 ? "bg-primary text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -463,7 +462,7 @@ export default function TradePage() {
         {tradeMode === "spot" && (
           <div className="space-y-4">
             {/* Pair Selector Header Banner */}
-            <div className={`glass-card sm:rounded-3xl rounded-none border-x-0 sm:border-x p-3.5 flex items-center justify-between border-border relative transition-all ${showPairSelector ? "z-[60]" : "z-10"}`}>
+            <div className={`rounded-[20px] bg-card border border-border/80 p-3.5 flex items-center justify-between relative transition-all shadow-sm ${showPairSelector ? "z-[60]" : "z-10"}`}>
               {/* Soft Click-outside backdrop with translucent blur */}
               {showPairSelector && (
                 <div

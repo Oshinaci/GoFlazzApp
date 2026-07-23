@@ -116,10 +116,10 @@ export default function MarketEnginePage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pb-24 text-foreground">
-      <ActionPageHeader title="GoFlazz Market Engine" backHref="/" />
+    <main className="min-h-screen bg-background pb-28 pt-2 text-foreground">
+      <div className="mx-auto max-w-[440px] px-3 sm:px-4 space-y-4">
+        <ActionPageHeader title="GoFlazz Market Engine" backHref="/" />
 
-      <div className="container mt-4 max-w-4xl space-y-6 px-4">
         {/* 1. MARKET OVERVIEW HEADER CARD */}
         {overview && (
           <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-card/90 p-5 shadow-2xl backdrop-blur-xl">

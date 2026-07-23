@@ -251,4 +251,31 @@ export class BlockchainService {
       chainId,
     };
   }
+
+  /**
+   * Broadcast raw signed transaction hex to network
+   */
+  static async sendRawTransaction(chainId: ChainId, rawTxHex: string): Promise<string> {
+    const provider = await ProviderManager.getProvider(chainId);
+    const txResponse = await provider.broadcastTransaction(rawTxHex);
+    blockchainLogger.log("tx_prep", "info", `Broadcasted transaction on chain ${chainId}`, { hash: txResponse.hash });
+
+    return txResponse.hash;
+  }
+
+  /**
+   * Get transaction receipt for a given tx hash
+   */
+  static async getTransactionReceipt(chainId: ChainId, txHash: string): Promise<ethers.TransactionReceipt | null> {
+    const provider = await ProviderManager.getProvider(chainId);
+    return await provider.getTransactionReceipt(txHash);
+  }
+
+  /**
+   * Get latest block number for confirmation calculations
+   */
+  static async getLatestBlockNumber(chainId: ChainId): Promise<number> {
+    return await this.getBlockNumber(chainId);
+  }
 }
+

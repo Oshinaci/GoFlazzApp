@@ -77,7 +77,7 @@ export function generateSalt(length = 16): string {
 /**
  * Securely hashes a PIN using SHA-256 for comparison / local validation.
  */
-export async function hashPin(pin: string, salt: string): Promise<string> {
+export async function hashPin(pin: string, salt = "goflazz_pin_salt"): Promise<string> {
   if (typeof window === "undefined" || !window.crypto || !window.crypto.subtle) {
     return "fallback_hash_" + pin + "_" + salt;
   }

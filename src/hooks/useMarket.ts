@@ -1,10 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchMarketData } from "@/lib/coingecko";
+"use client";
 
-export function useMarket(vsCurrency = "usd") {
-  return useQuery({
-    queryKey: ["market", vsCurrency],
-    queryFn: () => fetchMarketData(vsCurrency),
-    refetchInterval: 30_000,
-  });
+import { useMarketEngine } from "./useMarketEngine";
+
+export function useMarket() {
+  const engine = useMarketEngine();
+
+  return {
+    ...engine,
+    data: engine.overview,
+    isLoading: engine.isLoading,
+    refetch: engine.refresh,
+  };
 }

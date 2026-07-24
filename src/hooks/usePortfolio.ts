@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useWallet } from "./useWallet";
 import { useWalletBalances } from "./useWalletBalances";
 import { useMarketEngine } from "./useMarketEngine";
@@ -10,13 +10,14 @@ export function usePortfolio() {
   const { activeWallet, activeNetwork } = useWallet();
   const { balances, loading: balancesLoading } = useWalletBalances(activeWallet?.id);
   const { tokens, isLoading: marketLoading } = useMarketEngine();
+  const [showHiddenAssets, setShowHiddenAssets] = useState(false);
 
   const loading = balancesLoading || marketLoading;
 
   const assets: Asset[] = useMemo(() => {
     if (!activeWallet || balances.length === 0) return [];
 
-    return balances.map((bal) => {
+    const mapped = balances.map((bal) => {
       // Find market data for the asset
       const marketToken = tokens.find(
         (t) => t.symbol.toLowerCase() === bal.asset_symbol.toLowerCase()
@@ -39,8 +40,12 @@ export function usePortfolio() {
         changePercent24h: change24h,
         color,
       };
-    }).sort((a, b) => b.valueUsd - a.valueUsd);
-  }, [activeWallet, balances, tokens]);
+    });
+
+    const filtered = showHiddenAssets ? mapped : mapped.filter(a => a.balance > 0);
+
+    return filtered.sort((a, b) => b.valueUsd - a.valueUsd);
+  }, [activeWallet, balances, tokens, showHiddenAssets]);
 
   const totalPortfolioValue = useMemo(() => {
     return assets.reduce((sum, asset) => sum + asset.valueUsd, 0);
@@ -70,5 +75,7 @@ export function usePortfolio() {
     dailyPnL,
     dailyPnLPercentage,
     loading,
+    showHiddenAssets,
+    setShowHiddenAssets,
   };
 }

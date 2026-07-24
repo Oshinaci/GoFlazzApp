@@ -44,6 +44,7 @@ export default function BottomNav() {
           {NAV_ITEMS.map((item) => {
             const isActive: boolean = pathname === item.href;
             const Icon = item.icon;
+
             return (
               <Link
                 key={item.href}

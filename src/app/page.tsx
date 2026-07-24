@@ -12,7 +12,7 @@ import { useMarketEngine } from "@/hooks/useMarketEngine";
 import { formatCurrency } from "@/lib/utils";
 
 export default function HomePage() {
-  const { activeWallet, activeNetwork, assets, totalPortfolioValue, dailyPnLPercentage, loading: portfolioLoading } = usePortfolio();
+  const { activeWallet, activeNetwork, assets, totalPortfolioValue, dailyPnLPercentage, loading: portfolioLoading, showHiddenAssets, setShowHiddenAssets } = usePortfolio();
   const { tokens, watchlist, isLoading: marketLoading } = useMarketEngine();
 
   const loading = portfolioLoading || marketLoading;
@@ -42,6 +42,8 @@ export default function HomePage() {
         <AssetList 
           assets={assets}
           loading={loading}
+          showHiddenAssets={showHiddenAssets}
+          setShowHiddenAssets={setShowHiddenAssets}
         />
 
         {/* Live Market Feature Widget */}

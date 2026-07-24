@@ -22,4 +22,13 @@ export * from "./transaction-broadcaster.service";
 export * from "./transaction-monitor.service";
 export * from "./event-decoder.service";
 export * from "./failure-analyzer.service";
+export * from "./risk/risk.types";
+export * from "./risk/margin.service";
+export * from "./risk/leverage.service";
+export * from "./risk/liquidation.service";
+export * from "./risk/funding.service";
+export * from "./risk/pnl.service";
+export * from "./risk/riskCalculator";
+export * from "./risk/riskValidator";
+
 

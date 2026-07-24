@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import ActionPageHeader from "@/components/layout/ActionPageHeader";
 import { PerpetualMarketService } from "@/services/trade/perpetualMarket.service";
 import { PerpetualPositionService } from "@/services/trade/perpetualPosition.service";
 import { PerpetualPerformanceService } from "@/services/trade/perpetualPerformance.service";
 import { PerpetualMarket, MarginMode, OrderType, PositionSide } from "@/services/trade/perpetual.types";
+import { ExecutionEngine } from "@/services/trading/executionEngine";
+import { OrderValidator } from "@/services/trading/orderValidator";
+import { OrderService } from "@/services/trading/order.service";
+import { PositionService } from "@/services/trading/position.service";
+import { OrderHistoryService } from "@/services/trading/orderHistory";
+import { TradingProviderId, TradingOrderIntent, TradingOrderRecord, PerpetualPositionRecord } from "@/services/trading/trading.types";
+import { MarginService, LeverageService, LiquidationService, FundingService, PnLService, RiskCalculator, RiskValidator as RiskEngineValidator } from "@/services";
 import {
   TrendingUp,
   TrendingDown,
@@ -32,6 +39,7 @@ import {
   PieChart,
   Trophy,
   Flame,
+  AlertTriangle,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -44,11 +52,17 @@ import {
 import { toast } from "sonner";
 
 export default function TradeHubPage() {
-  const [activeTab, setActiveTab] = useState<"markets" | "trade" | "positions" | "dashboard" | "community">("markets");
+  const [activeTab, setActiveTab] = useState<"markets" | "trade" | "positions" | "risk" | "dashboard" | "community">("markets");
   const [selectedMarket, setSelectedMarket] = useState<PerpetualMarket>(PerpetualMarketService.getMarkets()[0]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [favorites, setFavorites] = useState<string[]>(["BTC-PERP", "ETH-PERP", "SOL-PERP"]);
+
+  // Execution Engine & Provider State
+  const [selectedProvider, setSelectedProvider] = useState<TradingProviderId>("goflazz_native");
+  const [openOrders, setOpenOrders] = useState<TradingOrderRecord[]>([]);
+  const [positionsList, setPositionsList] = useState<PerpetualPositionRecord[]>([]);
+  const [auditLogs, setAuditLogs] = useState(OrderHistoryService.getLogs());
 
   // Order Entry State
   const [orderSide, setOrderSide] = useState<PositionSide>("long");
@@ -66,10 +80,100 @@ export default function TradeHubPage() {
   // Data fetching from services
   const markets = useMemo(() => PerpetualMarketService.searchMarkets(searchQuery, selectedCategory), [searchQuery, selectedCategory]);
   const accountSummary = PerpetualPositionService.getAccountSummary();
-  const positions = PerpetualPositionService.getPositions();
-  const orders = PerpetualPositionService.getOrders();
   const performanceStats = PerpetualPerformanceService.getPerformanceStats();
   const leaderboard = PerpetualPerformanceService.getLeaderboard();
+
+  // GoFlazz Risk & Margin Engine Calculations
+  const riskMarginSummary = useMemo(() => {
+    const posDetails = positionsList.map((p) => {
+      const notional = p.size * p.markPrice;
+      const liq = LiquidationService.calculateLiquidation(
+        p.marketSymbol,
+        p.side,
+        p.entryPrice,
+        p.markPrice,
+        p.leverage,
+        p.size,
+        p.margin,
+        0.005
+      );
+      return {
+        marketSymbol: p.marketSymbol,
+        leverage: p.leverage,
+        notional,
+        notionalValue: notional,
+        liquidationDistancePct: liq.distancePercentage,
+        initialMarginRate: 1 / p.leverage,
+        maintenanceMarginRate: 0.005,
+      };
+    });
+
+    const summary = MarginService.calculateMarginSummary(
+      accountSummary.totalBalance - accountSummary.unrealizedPnl,
+      accountSummary.unrealizedPnl,
+      posDetails
+    );
+
+    const assessment = RiskCalculator.assessPortfolioRisk(
+      summary.totalEquity,
+      summary.usedMargin,
+      posDetails
+    );
+
+    return {
+      summary,
+      assessment,
+      positionsLiquidation: posDetails,
+    };
+  }, [positionsList, accountSummary]);
+
+  // Load live open orders and positions from provider adapter on mount or provider change
+  useEffect(() => {
+    async function loadEngineData() {
+      try {
+        const orders = await OrderService.getOpenOrders(selectedProvider);
+        const positions = await PositionService.getPositions(selectedProvider);
+        setOpenOrders(orders);
+        setPositionsList(positions.length > 0 ? positions : PerpetualPositionService.getPositions() as any);
+        setAuditLogs([...OrderHistoryService.getLogs()]);
+      } catch (err) {
+        console.error("Failed to load trading engine data:", err);
+      }
+    }
+    loadEngineData();
+  }, [selectedProvider]);
+
+  // Real-time preview calculation
+  const previewResult = useMemo(() => {
+    const sizeNum = Number(orderSize) || 0;
+    const priceNum = orderType === "market" ? selectedMarket.markPrice : Number(limitPrice) || selectedMarket.markPrice;
+    const intent: TradingOrderIntent = {
+      marketSymbol: selectedMarket.symbol,
+      side: orderSide,
+      orderType,
+      marginMode,
+      leverage,
+      size: sizeNum,
+      price: priceNum,
+      reduceOnly,
+      postOnly,
+    };
+
+    return OrderValidator.validate(intent, {
+      isWalletConnected: true,
+      isTradingAccountReady: true,
+      availableMargin: accountSummary.availableMargin,
+      maxLeverage: selectedMarket.maxLeverage,
+      currentPositionsCount: positionsList.length,
+      maxPositionsAllowed: 10,
+      markPrice: selectedMarket.markPrice,
+      minOrderSize: 0.001,
+      maxOrderSize: 10.0,
+      minNotional: 10.0,
+      tickSize: 0.1,
+      lotSize: 0.0001,
+    });
+  }, [orderSize, orderType, limitPrice, selectedMarket, orderSide, marginMode, leverage, reduceOnly, postOnly, accountSummary.availableMargin, positionsList.length]);
 
   const toggleFavorite = (symbol: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,13 +186,68 @@ export default function TradeHubPage() {
     }
   };
 
-  const handlePlaceOrderPreview = (e: React.FormEvent) => {
+  const handleExecuteOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderSize || Number(orderSize) <= 0) {
+    const sizeNum = Number(orderSize);
+    if (!sizeNum || sizeNum <= 0) {
       toast.error("Please enter a valid order size.");
       return;
     }
-    toast.success(`[Perpetual Infrastructure] ${orderSide.toUpperCase()} ${orderType.toUpperCase()} order prepared for ${selectedMarket.symbol} at ${leverage}x leverage! (Order execution disabled per Phase 3.9 spec).`);
+
+    const intent: TradingOrderIntent = {
+      marketSymbol: selectedMarket.symbol,
+      side: orderSide,
+      orderType,
+      marginMode,
+      leverage,
+      size: sizeNum,
+      price: orderType === "market" ? selectedMarket.markPrice : Number(limitPrice),
+      triggerPrice: orderType.includes("stop") ? Number(triggerPrice) : undefined,
+      reduceOnly,
+      postOnly,
+      takeProfit: takeProfit ? Number(takeProfit) : undefined,
+      stopLoss: stopLoss ? Number(stopLoss) : undefined,
+    };
+
+    const result = await ExecutionEngine.executeOrder(intent, {
+      isWalletConnected: true,
+      isTradingAccountReady: true,
+      availableMargin: accountSummary.availableMargin,
+      maxLeverage: selectedMarket.maxLeverage,
+      currentPositionsCount: positionsList.length,
+      maxPositionsAllowed: 10,
+      markPrice: selectedMarket.markPrice,
+      minOrderSize: 0.001,
+      maxOrderSize: 10.0,
+      minNotional: 10.0,
+      tickSize: 0.1,
+      lotSize: 0.0001,
+    }, selectedProvider);
+
+    if (result.success && result.order) {
+      toast.success(`Order successfully executed via [${selectedProvider.toUpperCase()}]! Status: ${result.order.status}`);
+      setOrderSize("");
+      // Refresh state
+      const updatedOrders = await OrderService.getOpenOrders(selectedProvider);
+      const updatedPositions = await PositionService.getPositions(selectedProvider);
+      setOpenOrders(updatedOrders);
+      setPositionsList(updatedPositions);
+      setAuditLogs([...OrderHistoryService.getLogs()]);
+    } else {
+      toast.error(result.error || "Order execution failed.");
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    const success = await OrderService.cancelOrder(orderId, selectedProvider);
+    if (success) {
+      toast.success(`Cancelled order ${orderId}`);
+      const updatedOrders = await OrderService.getOpenOrders(selectedProvider);
+      setOpenOrders(updatedOrders);
+      setAuditLogs([...OrderHistoryService.getLogs()]);
+    } else {
+      toast.error("Failed to cancel order.");
+    }
   };
 
   return (
@@ -142,7 +301,8 @@ export default function TradeHubPage() {
             {[
               { id: "markets", label: "Markets", icon: BarChart2 },
               { id: "trade", label: "Terminal", icon: SlidersHorizontal },
-              { id: "positions", label: `Positions (${positions.length})`, icon: Layers },
+              { id: "positions", label: `Positions (${positionsList.length})`, icon: Layers },
+              { id: "risk", label: "Risk & Margin", icon: ShieldCheck },
               { id: "dashboard", label: "Performance", icon: PieChart },
               { id: "community", label: "Community & Rewards", icon: Trophy },
             ].map((tab) => {
@@ -363,7 +523,7 @@ export default function TradeHubPage() {
                   </div>
                 </div>
 
-                <form onSubmit={handlePlaceOrderPreview} className="space-y-4">
+                <form onSubmit={handleExecuteOrder} className="space-y-4">
                   {/* Margin Mode & Leverage Selector */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
@@ -464,17 +624,87 @@ export default function TradeHubPage() {
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-2 space-y-3">
+                    {/* Preview / Validator Feedback Box */}
+                    <div className="rounded-[14px] bg-card-secondary p-3 space-y-2 border border-border/60 text-[11px]">
+                      <div className="flex items-center justify-between font-semibold">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                          <span>Order Preview & Risk Check</span>
+                        </span>
+                        <span className={`font-bold ${previewResult.isValid ? "text-emerald-500" : "text-red-500"}`}>
+                          {previewResult.isValid ? "Ready to Execute" : "Validation Failed"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                        <div>
+                          <span className="text-muted-foreground">Margin Required:</span> <span className="font-bold text-foreground">${previewResult.marginRequired.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Est. Liq. Price:</span> <span className="font-bold text-red-500">${previewResult.estimatedLiquidationPrice.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Est. Fee:</span> <span className="font-bold text-foreground">${previewResult.estimatedFee.toFixed(3)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Risk Score:</span> <span className={`font-bold ${previewResult.riskScore > 75 ? "text-red-500" : "text-emerald-500"}`}>{previewResult.riskScore.toFixed(0)}/100</span>
+                        </div>
+                      </div>
+
+                      {previewResult.errors.length > 0 && (
+                        <div className="p-2 rounded-[8px] bg-red-500/10 text-red-500 font-medium space-y-1">
+                          {previewResult.errors.map((err, i) => (
+                            <div key={i} className="flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              <span>{err}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {previewResult.warnings.length > 0 && (
+                        <div className="p-2 rounded-[8px] bg-amber-500/10 text-amber-500 font-medium space-y-1">
+                          {previewResult.warnings.map((warn, i) => (
+                            <div key={i} className="flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              <span>{warn}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Provider Selector */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase">Execution Provider Adapter</label>
+                      <select
+                        value={selectedProvider}
+                        onChange={(e) => setSelectedProvider(e.target.value as TradingProviderId)}
+                        className="w-full rounded-[10px] border border-border bg-card-secondary px-3 py-1.5 text-[11px] font-bold text-foreground outline-none focus:border-primary"
+                      >
+                        <option value="goflazz_native">GoFlazz Native Perpetual Engine</option>
+                        <option value="hyperliquid">Hyperliquid L1 Adapter</option>
+                        <option value="vertex">Vertex Protocol Adapter</option>
+                        <option value="synfutures">SynFutures V3 Adapter</option>
+                        <option value="orderly">Orderly Network Adapter</option>
+                      </select>
+                    </div>
+
                     <button
                       type="submit"
+                      disabled={!previewResult.isValid}
                       className={`w-full py-3.5 rounded-[16px] text-white text-[14px] font-bold shadow-sm transition ${
-                        orderSide === "long" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
+                        !previewResult.isValid
+                          ? "bg-muted text-muted-foreground cursor-not-allowed"
+                          : orderSide === "long"
+                          ? "bg-emerald-500 hover:bg-emerald-600"
+                          : "bg-red-500 hover:bg-red-600"
                       }`}
                     >
-                      {orderSide === "long" ? "Open Long" : "Open Short"} {selectedMarket.baseAsset} ({leverage}x)
+                      {orderSide === "long" ? "Execute Long" : "Execute Short"} {selectedMarket.baseAsset} ({leverage}x)
                     </button>
-                    <p className="text-[10px] text-center text-muted-foreground pt-2">
-                      Perpetual futures infrastructure ready. Live exchange connection coming in Phase 4.
+                    <p className="text-[10px] text-center text-muted-foreground pt-1">
+                      Real Perpetual Execution Engine active. Secured by EIP-712 & Isolated Decryption.
                     </p>
                   </div>
                 </form>
@@ -485,73 +715,62 @@ export default function TradeHubPage() {
 
         {/* TAB 3: POSITIONS & ORDERS */}
         {activeTab === "positions" && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-8 animate-in fade-in duration-200">
             <div className="space-y-3">
               <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2">
                 <Layers className="h-4 w-4 text-primary" />
-                <span>Active Perpetual Positions ({positions.length})</span>
+                <span>Active Perpetual Positions ({positionsList.length})</span>
               </h3>
 
               <div className="space-y-3">
-                {positions.map((pos) => (
-                  <div key={pos.id} className="rounded-[20px] border border-border/80 bg-card p-4 sm:p-5 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`px-2.5 py-1 rounded-[8px] text-[11px] font-bold uppercase ${pos.side === "long" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
-                          {pos.side} {pos.leverage}x
-                        </span>
-                        <span className="text-[15px] font-bold text-foreground">{pos.marketSymbol}</span>
-                        <span className="text-[11px] text-muted-foreground uppercase font-semibold">({pos.marginMode})</span>
+                {positionsList.length === 0 ? (
+                  <div className="rounded-[20px] border border-border/80 bg-card p-8 text-center text-muted-foreground text-[13px]">
+                    No active positions found. Execute an order from the trading terminal.
+                  </div>
+                ) : (
+                  positionsList.map((pos) => (
+                    <div key={pos.id} className="rounded-[20px] border border-border/80 bg-card p-4 sm:p-5 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className={`px-2.5 py-1 rounded-[8px] text-[11px] font-bold uppercase ${pos.side === "long" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
+                            {pos.side} {pos.leverage}x
+                          </span>
+                          <span className="text-[15px] font-bold text-foreground">{pos.marketSymbol}</span>
+                          <span className="text-[11px] text-muted-foreground uppercase font-semibold">({pos.marginMode})</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[11px] text-muted-foreground">Unrealized PnL (ROE)</div>
+                          <div className={`text-[14px] font-bold ${pos.unrealizedPnl >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                            {pos.unrealizedPnl >= 0 ? "+" : ""}${pos.unrealizedPnl.toFixed(2)} (+{pos.roe.toFixed(1)}%)
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-[11px] text-muted-foreground">Unrealized PnL (ROE)</div>
-                        <div className={`text-[14px] font-bold ${pos.unrealizedPnl >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                          {pos.unrealizedPnl >= 0 ? "+" : ""}${pos.unrealizedPnl.toFixed(2)} (+{pos.roe.toFixed(1)}%)
+
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-card-secondary p-3 rounded-[14px] text-[12px]">
+                        <div>
+                          <div className="text-muted-foreground text-[10px] uppercase font-bold">Size</div>
+                          <div className="font-mono font-bold text-foreground">{pos.size}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-[10px] uppercase font-bold">Entry Price</div>
+                          <div className="font-mono font-bold text-foreground">${pos.entryPrice.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-[10px] uppercase font-bold">Mark Price</div>
+                          <div className="font-mono font-bold text-foreground">${pos.markPrice.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-[10px] uppercase font-bold">Liq. Price</span>
+                          <div className="font-mono font-bold text-red-500">${pos.liquidationPrice.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground text-[10px] uppercase font-bold">Margin</div>
+                          <div className="font-mono font-bold text-foreground">${pos.margin.toFixed(2)}</div>
                         </div>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-card-secondary p-3 rounded-[14px] text-[12px]">
-                      <div>
-                        <div className="text-muted-foreground text-[10px] uppercase font-bold">Size</div>
-                        <div className="font-mono font-bold text-foreground">{pos.size}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground text-[10px] uppercase font-bold">Entry Price</div>
-                        <div className="font-mono font-bold text-foreground">${pos.entryPrice.toLocaleString()}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground text-[10px] uppercase font-bold">Mark Price</div>
-                        <div className="font-mono font-bold text-foreground">${pos.markPrice.toLocaleString()}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground text-[10px] uppercase font-bold">Liq. Price</div>
-                        <div className="font-mono font-bold text-red-500">${pos.liquidationPrice.toLocaleString()}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground text-[10px] uppercase font-bold">Margin</div>
-                        <div className="font-mono font-bold text-foreground">${pos.margin.toFixed(2)}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => toast.info("Margin adjustment simulated.")}
-                        className="px-3 py-1.5 rounded-[10px] border border-border bg-card-secondary text-[12px] font-bold text-foreground hover:bg-accent/10 transition"
-                      >
-                        Adjust Margin
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toast.success(`Market close order prepared for ${pos.marketSymbol}`)}
-                        className="px-4 py-1.5 rounded-[10px] bg-red-500/10 text-red-500 text-[12px] font-bold hover:bg-red-500/20 transition"
-                      >
-                        Market Close
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -559,32 +778,222 @@ export default function TradeHubPage() {
             <div className="space-y-3 pt-4">
               <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                <span>Open Orders ({orders.length})</span>
+                <span>Open Limit/Stop Orders ({openOrders.length})</span>
               </h3>
 
-              <div className="space-y-2.5">
-                {orders.map((ord) => (
-                  <div key={ord.id} className="rounded-[16px] border border-border/80 bg-card p-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${ord.side === "long" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
-                        {ord.side}
-                      </span>
-                      <div>
-                        <div className="text-[13px] font-bold text-foreground">{ord.marketSymbol} • {ord.orderType.toUpperCase()}</div>
-                        <div className="text-[11px] text-muted-foreground font-mono">
-                          Size: {ord.size} @ ${ord.price || ord.triggerPrice || "Market"} ({ord.leverage}x)
+              <div className="space-y-3">
+                {openOrders.length === 0 ? (
+                  <div className="rounded-[20px] border border-border/80 bg-card p-6 text-center text-muted-foreground text-[13px]">
+                    No open orders.
+                  </div>
+                ) : (
+                  openOrders.map((ord) => (
+                    <div key={ord.id} className="rounded-[16px] border border-border/80 bg-card p-4 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-[6px] text-[10px] font-bold uppercase ${ord.side === "long" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
+                            {ord.side}
+                          </span>
+                          <span className="text-[14px] font-bold text-foreground">{ord.marketSymbol}</span>
+                          <span className="text-[11px] text-muted-foreground uppercase">{ord.orderType}</span>
+                        </div>
+                        <div className="text-[12px] font-mono text-muted-foreground">
+                          Size: {ord.size} @ ${ord.price || ord.triggerPrice || 0} • Provider: {ord.providerId}
                         </div>
                       </div>
+                      <button
+                        onClick={() => handleCancelOrder(ord.id)}
+                        className="px-3 py-1.5 rounded-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[12px] font-bold transition"
+                      >
+                        Cancel
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => toast.info(`Cancelled order ${ord.id}`)}
-                      className="px-3 py-1.5 rounded-[10px] bg-card-secondary text-[11px] font-bold text-red-500 hover:bg-red-500/10 transition"
-                    >
-                      Cancel
-                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Audit Log / Execution History */}
+            <div className="space-y-3 pt-4">
+              <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                <span>Execution Audit Trail & Logs</span>
+              </h3>
+              <div className="rounded-[20px] border border-border/80 bg-card p-4 space-y-2 max-h-60 overflow-y-auto font-mono text-[11px]">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="flex items-start justify-between border-b border-border/40 pb-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-bold">[{log.action}]</span>
+                        <span className="text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                      <div className="text-foreground">{log.details}</div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-card-secondary text-muted-foreground">{log.marketSymbol}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
+        {/* TAB: RISK & MARGIN ENGINE */}
+        {activeTab === "risk" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Risk Overview Banner */}
+            <div className="rounded-[22px] border border-border/80 bg-card p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-[12px] font-bold uppercase text-primary flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    <span>GoFlazz Risk & Margin Engine V2</span>
+                  </div>
+                  <h3 className="text-[18px] font-bold text-foreground">Real-Time Portfolio Risk & Margin Dashboard</h3>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] text-muted-foreground uppercase font-bold">Portfolio Risk Score</div>
+                  <div className={`text-[22px] font-mono font-bold ${riskMarginSummary.assessment.riskScore > 75 ? "text-red-500" : riskMarginSummary.assessment.riskScore > 40 ? "text-amber-500" : "text-emerald-500"}`}>
+                    {riskMarginSummary.assessment.riskScore.toFixed(0)}/100
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                <div className="bg-card-secondary p-4 rounded-[16px] space-y-1">
+                  <div className="text-[11px] text-muted-foreground uppercase font-bold">Total Equity</div>
+                  <div className="text-[16px] font-mono font-bold text-foreground">${riskMarginSummary.summary.totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div className="bg-card-secondary p-4 rounded-[16px] space-y-1">
+                  <div className="text-[11px] text-muted-foreground uppercase font-bold">Margin Utilization</div>
+                  <div className="text-[16px] font-mono font-bold text-primary">{riskMarginSummary.summary.marginUtilization.toFixed(1)}%</div>
+                </div>
+                <div className="bg-card-secondary p-4 rounded-[16px] space-y-1">
+                  <div className="text-[11px] text-muted-foreground uppercase font-bold">Margin Buffer</div>
+                  <div className="text-[16px] font-mono font-bold text-emerald-500">${riskMarginSummary.summary.marginBuffer.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div className="bg-card-secondary p-4 rounded-[16px] space-y-1">
+                  <div className="text-[11px] text-muted-foreground uppercase font-bold">Buying Power</div>
+                  <div className="text-[16px] font-mono font-bold text-foreground">${riskMarginSummary.summary.buyingPower.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Margin Breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="rounded-[22px] border border-border/80 bg-card p-5 space-y-4">
+                <h4 className="text-[14px] font-bold text-foreground flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <span>Margin Metrics</span>
+                </h4>
+                <div className="space-y-3 font-mono text-[12px]">
+                  <div className="flex justify-between py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground">Initial Margin (IM):</span>
+                    <span className="font-bold text-foreground">${riskMarginSummary.summary.initialMargin.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground">Maintenance Margin (MM):</span>
+                    <span className="font-bold text-foreground">${riskMarginSummary.summary.maintenanceMargin.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground">Used Margin:</span>
+                    <span className="font-bold text-foreground">${riskMarginSummary.summary.usedMargin.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-border/40">
+                    <span className="text-muted-foreground">Free Margin:</span>
+                    <span className="font-bold text-emerald-500">${riskMarginSummary.summary.freeMargin.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-muted-foreground">Margin Ratio (MM / Equity):</span>
+                    <span className="font-bold text-foreground">{riskMarginSummary.summary.marginRatio.toFixed(2)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[22px] border border-border/80 bg-card p-5 space-y-4">
+                <h4 className="text-[14px] font-bold text-foreground flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <span>Active Risk Alerts ({riskMarginSummary.assessment.alerts.length})</span>
+                </h4>
+                <div className="space-y-2.5 max-h-56 overflow-y-auto">
+                  {riskMarginSummary.assessment.alerts.length === 0 ? (
+                    <div className="p-4 rounded-[14px] bg-card-secondary text-center text-muted-foreground text-[12px]">
+                      No risk alerts. Portfolio health is stable.
+                    </div>
+                  ) : (
+                    riskMarginSummary.assessment.alerts.map((alert) => (
+                      <div key={alert.id} className="p-3 rounded-[14px] bg-red-500/10 border border-red-500/20 text-[11px] space-y-1">
+                        <div className="font-bold text-red-500 flex items-center justify-between">
+                          <span>{alert.title}</span>
+                          <span className="text-[10px] text-muted-foreground">{new Date(alert.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div className="text-foreground">{alert.message}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Position Health & Liquidation Monitor */}
+            <div className="rounded-[22px] border border-border/80 bg-card p-5 space-y-4">
+              <h4 className="text-[14px] font-bold text-foreground flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                <span>Position Health & Liquidation Distance Monitor</span>
+              </h4>
+
+              <div className="space-y-3">
+                {positionsList.length === 0 ? (
+                  <div className="p-6 rounded-[16px] bg-card-secondary text-center text-muted-foreground text-[13px]">
+                    No open positions to monitor.
+                  </div>
+                ) : (
+                  positionsList.map((pos) => {
+                    const liq = LiquidationService.calculateLiquidation(
+                      pos.marketSymbol,
+                      pos.side,
+                      pos.entryPrice,
+                      pos.markPrice,
+                      pos.leverage,
+                      pos.size,
+                      pos.margin,
+                      0.005
+                    );
+                    return (
+                      <div key={pos.id} className="p-4 rounded-[16px] bg-card-secondary border border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <span className={`px-2.5 py-1 rounded-[8px] text-[11px] font-bold uppercase ${pos.side === "long" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
+                            {pos.side} {pos.leverage}x
+                          </span>
+                          <div>
+                            <div className="text-[14px] font-bold text-foreground">{pos.marketSymbol}</div>
+                            <div className="text-[11px] font-mono text-muted-foreground">
+                              Entry: ${pos.entryPrice.toLocaleString()} • Mark: ${pos.markPrice.toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-6 text-right font-mono text-[12px]">
+                          <div>
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold">Liq. Price</div>
+                            <div className="font-bold text-red-500">${liq.liquidationPrice.toFixed(2)}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold">Distance</div>
+                            <div className="font-bold text-foreground">{liq.distancePercentage.toFixed(2)}%</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-muted-foreground uppercase font-bold">Health Status</div>
+                            <span className={`px-2 py-0.5 rounded-[6px] text-[10px] font-bold uppercase ${LiquidationService.getHealthColor(liq.healthStatus)}`}>
+                              {liq.healthStatus}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>

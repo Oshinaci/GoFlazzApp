@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import ActionPageHeader from "@/components/layout/ActionPageHeader";
 import { useWallet } from "@/hooks/useWallet";
+import { useAuth } from "@/hooks/useAuth";
 import { useWalletBalances } from "@/hooks/useWalletBalances";
 import { ContactsService, ContactRecord } from "@/services/contacts.service";
 import { TransactionIntent, TransactionReview, SendStep } from "@/services/transaction/transaction.types";
@@ -10,6 +11,7 @@ import { TransactionValidator } from "@/services/transaction/transactionValidato
 import { TransactionBuilder } from "@/services/transaction/transactionBuilder";
 import { AddressValidator } from "@/services/transaction/addressValidator";
 import QrScannerModal from "@/components/transaction/QrScannerModal";
+import PinAuthorizationModal from "@/components/transaction/PinAuthorizationModal";
 import { toast } from "sonner";
 import {
   Send,
@@ -31,6 +33,7 @@ import {
 } from "lucide-react";
 
 export default function SendPage() {
+  const { user } = useAuth();
   const { activeWallet, activeNetwork } = useWallet();
   const { balances, loading: balancesLoading } = useWalletBalances(activeWallet?.id);
   const [contacts, setContacts] = useState<ContactRecord[]>([]);
@@ -45,6 +48,7 @@ export default function SendPage() {
   // Modals
   const [showContactsModal, setShowContactsModal] = useState<boolean>(false);
   const [showQrModal, setShowQrModal] = useState<boolean>(false);
+  const [showPinModal, setShowPinModal] = useState<boolean>(false);
   const [contactSearch, setContactSearch] = useState<string>("");
   const [qrInputUri, setQrInputUri] = useState<string>("");
 
@@ -449,14 +453,14 @@ export default function SendPage() {
               </div>
             )}
 
-            {/* Read-Only Confirmation Notice */}
+            {/* Ready for Execution Notice */}
             <div className="rounded-[14px] border border-border/80 bg-card p-3 text-center space-y-1">
               <div className="text-[12px] font-bold text-foreground flex items-center justify-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                <span>Ready for Confirmation (Simulation Mode)</span>
+                <span>Ready for Real Transaction Execution (Phase 3.9)</span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                As requested in Phase 3.8, all transaction preparations are fully built and validated. Actual transaction signing and broadcasting will be unlocked in Phase 3.9.
+                Enter your security PIN to decrypt your keystore, sign offline with EIP-155 replay protection, and broadcast directly to Arbitrum One.
               </p>
             </div>
 
@@ -471,20 +475,34 @@ export default function SendPage() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  toast.success("Transaction successfully prepared and validated in simulation mode!");
-                  setStep("asset");
-                  setRecipient("");
-                  setAmount("");
-                  setMemo("");
-                }}
+                onClick={() => setShowPinModal(true)}
                 className="w-2/3 flex items-center justify-center gap-2 rounded-[14px] bg-primary py-3 text-[13px] font-bold text-white shadow-sm hover:bg-primary/90 transition"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Simulate Confirmation</span>
+                <span>Authorize & Sign Transaction</span>
               </button>
             </div>
           </div>
+        )}
+
+        {/* PIN AUTHORIZATION & EXECUTION MODAL */}
+        {reviewData && (
+          <PinAuthorizationModal
+            isOpen={showPinModal}
+            onClose={() => setShowPinModal(false)}
+            userId={user?.id || "default"}
+            walletId={activeWallet?.id || "default"}
+            intent={reviewData.intent}
+            review={reviewData}
+            onSuccess={(hash) => {
+              setShowPinModal(false);
+              setStep("asset");
+              setRecipient("");
+              setAmount("");
+              setMemo("");
+              setReviewData(null);
+            }}
+          />
         )}
 
         {/* ADDRESS BOOK CONTACTS MODAL */}

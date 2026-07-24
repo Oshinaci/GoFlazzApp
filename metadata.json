@@ -1,6 +1,6 @@
 {
-  "name": "GoFlazz Crypto Wallet",
-  "description": "Secure, self-custodial crypto wallet on Arbitrum One with complete transaction preparation engine, address validation, and QR scanner.",
+  "name": "GoFlazz Perpetual Trading Hub",
+  "description": "Enterprise self-custodial crypto wallet and Perpetual Futures Trading Hub on Arbitrum One with advanced margin modes, leverage up to 100x, live positions, orders, and community rankings.",
   "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

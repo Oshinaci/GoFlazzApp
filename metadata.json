@@ -1,0 +1,6 @@
+{
+  "name": "GoFlazz Crypto Wallet",
+  "description": "Secure, self-custodial crypto wallet on Arbitrum One with complete transaction preparation engine, address validation, and QR scanner.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
